@@ -3,6 +3,7 @@ from keras_imp.preprocess import *
 from keras_imp.selectTrainingPairs import *
 import keras
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 tagged, submmit, join = get_description()
 p2size = get_iamges_size(join)

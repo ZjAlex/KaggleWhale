@@ -83,7 +83,7 @@ def match(h1, h2, h2ps):
 def get_p2h(join):
     print("得到p2h（picture --- perceptual hash）")
     if os.path.isfile(P2H):
-        with open(P2H) as f:
+        with open(P2H, 'rb') as f:
             p2h = pickle.load(f)
     else:
         p2h = {}

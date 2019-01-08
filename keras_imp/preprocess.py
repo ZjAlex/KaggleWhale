@@ -276,7 +276,6 @@ def read_for_validation(p, h2p, p2bb, p2size):
 
 
 def test_image_transform(tagged, h2p, p2bb, p2size):
-    p = list(tagged.keys())[312]
     imgs = [
         read_raw_image(p),
         array_to_img(read_for_validation(p, h2p, p2bb, p2size)),

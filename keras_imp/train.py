@@ -5,7 +5,15 @@ import keras
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
+import sys
+import platform
+old_stderr = sys.stderr
+sys.stderr = open('/dev/null' if platform.system() != 'Windows' else 'nul', 'w')
+import keras
+sys.stderr = old_stderr
+
 tagged, submmit, join = get_description()
+p = list(tagged.keys())[312]
 p2size = get_iamges_size(join)
 p2h = get_p2h(join)
 h2ps = get_h2ps(p2h)

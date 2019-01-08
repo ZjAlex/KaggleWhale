@@ -241,8 +241,8 @@ def make_steps(step, ampl):
 histories = []
 steps = 0
 
-if os.path.isfile('../../KWhaleData/piotte/mpiotte-standard.model'):
-    tmp = keras.models.load_model('../../KWhaleData/piotte/mpiotte-standard.model')
+if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
+    tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
     model.set_weights(tmp.get_weights())
 else:
     # epoch -> 10

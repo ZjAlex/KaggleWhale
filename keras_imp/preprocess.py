@@ -14,13 +14,13 @@ from keras.preprocessing.image import img_to_array, array_to_img, apply_affine_t
 from scipy.ndimage import affine_transform
 
 # 文件路径
-TRAIN_DF = '../../KWhaleData/train.csv'
-SUB_Df = '../../KWhaleData/sample_submission.csv'
-TRAIN = '../../KWhaleData/train/'
-TEST = '../../KWhaleData/test/'
-P2H = '../../KWhaleData/metadata/p2h.pickle'
-P2SIZE = '../../KWhaleData/metadata/p2size.pickle'
-BB_DF = '../../KWhaleData/metadata/bounding_boxes.csv'
+TRAIN_DF = '/home/zhangjie/KWhaleData/train.csv'
+SUB_Df = '/home/zhangjie/KWhaleData/sample_submission.csv'
+TRAIN = '/home/zhangjie/KWhaleData/train/'
+TEST = '/home/zhangjie/KWhaleData/test/'
+P2H = '/home/zhangjie/KWhaleData/metadata/p2h.pickle'
+P2SIZE = '/home/zhangjie/KWhaleData/metadata/p2size.pickle'
+BB_DF = '/home/zhangjie/KWhaleData/metadata/bounding_boxes.csv'
 
 
 # 读取训练数据和测试数据的信息

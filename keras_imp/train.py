@@ -97,7 +97,6 @@ class TrainingData(Sequence):
         return (len(self.match) + len(self.unmatch) + self.batch_size - 1) // self.batch_size
 
 
-
 # A Keras generator to evaluate only the BRANCH MODEL
 class FeatureGen(Sequence):
     def __init__(self, data, batch_size=64, verbose=1):
@@ -105,13 +104,15 @@ class FeatureGen(Sequence):
         self.data = data
         self.batch_size = batch_size
         self.verbose = verbose
-        if self.verbose > 0: self.progress = tqdm(total=len(self), desc='Features')
+        if self.verbose > 0:
+            self.progress = tqdm(total=len(self), desc='Features')
 
     def __getitem__(self, index):
         start = self.batch_size * index
         size = min(len(self.data) - start, self.batch_size)
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
-        for i in range(size): a[i, :, :, :] = read_for_validation(self.data[start + i], h2p, p2bb, p2size)
+        for i in range(size):
+            a[i, :, :, :] = read_for_validation(self.data[start + i], h2p, p2bb, p2size)
         if self.verbose > 0:
             self.progress.update()
             if self.progress.n >= len(self): self.progress.close()
@@ -153,7 +154,6 @@ class ScoreGen(Sequence):
         return (len(self.ix) + self.batch_size - 1) // self.batch_size
 
 
-
 def set_lr(model, lr):
     K.set_value(model.optimizer.lr, float(lr))
 
@@ -189,9 +189,9 @@ def compute_score(verbose=1):
     """
     Compute the score matrix by scoring every pictures from the training set against every other picture O(n^2).
     """
-    features = branch_model.predict_generator(FeatureGen(train, verbose=verbose), max_queue_size=12, workers=6,
+    features = branch_model.predict_generator(FeatureGen(train, verbose=verbose), max_queue_size=12, workers=4,
                                               verbose=0)
-    score = head_model.predict_generator(ScoreGen(features, verbose=verbose), max_queue_size=12, workers=6, verbose=0)
+    score = head_model.predict_generator(ScoreGen(features, verbose=verbose), max_queue_size=12, workers=4, verbose=0)
     score = score_reshape(score, features)
     return features, score
 
@@ -212,9 +212,12 @@ def make_steps(step, ampl):
     for w, hs in w2hs.items():
         for h in hs:
             if h in train_set:
-                if w not in w2ts: w2ts[w] = []
-                if h not in w2ts[w]: w2ts[w].append(h)
-    for w, ts in w2ts.items(): w2ts[w] = np.array(ts)
+                if w not in w2ts:
+                    w2ts[w] = []
+                if h not in w2ts[w]:
+                    w2ts[w].append(h)
+    for w, ts in w2ts.items():
+        w2ts[w] = np.array(ts)
 
     # Map training picture hash value to index in 'train' array
     t2i = {}

@@ -165,11 +165,11 @@ def prefer(ps, p2size):
     return best_p
 
 
-def get_h2p(h2ps):
+def get_h2p(h2ps, p2size):
     print("获取h2p")
     h2p = {}
     for h, ps in h2ps.items():
-        h2p[h] = prefer(ps)
+        h2p[h] = prefer(ps, p2size)
     return h2p
 
 

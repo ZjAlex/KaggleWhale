@@ -9,7 +9,7 @@ tagged, submmit, join = get_description()
 p2size = get_iamges_size(join)
 p2h = get_p2h(join)
 h2ps = get_h2ps(p2h)
-h2p = get_h2p(h2ps)
+h2p = get_h2p(h2ps, p2size)
 p2bb = get_bb()
 
 img_shape = (384, 384, 1)  # The image shape used by the model

@@ -31,6 +31,7 @@ from tqdm import tqdm_notebook as tqdm
 import time
 import os
 
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 TRAIN_DF = '/home/zhangjie/KWhaleData/train.csv'
 SUB_Df = '/home/zhangjie/KWhaleData/sample_submission.csv'

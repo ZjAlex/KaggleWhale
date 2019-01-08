@@ -25,6 +25,7 @@ BB_DF = '/home/zhangjie/KWhaleData/metadata/bounding_boxes.csv'
 
 # 读取训练数据和测试数据的信息
 def get_description():
+    print("读取训练数据和测试数据的信息")
     tagged = dict([(p, w) for _, p, w in pd.read_csv(TRAIN_DF).to_records()])
     submmit = [p for _, p, _ in pd.read_csv(SUB_Df).to_records()]
     join = list(tagged.keys()) + submmit
@@ -42,6 +43,7 @@ def expand_path(p):
 
 # 得到每个图像的大小
 def get_iamges_size(join):
+    print("得到每个图像的大小")
     if os.path.isfile(P2SIZE):
         print("P2SIZE already exists!")
         with open(P2SIZE, 'rb') as f:
@@ -50,6 +52,8 @@ def get_iamges_size(join):
         p2size = {}
         for p in tqdm(join):
             p2size[p] = Image.open(expand_path(p)).size
+        data_output = open(P2SIZE, 'wb')
+        pickle.dump(p2size, data_output)
     return p2size
 
 
@@ -77,6 +81,7 @@ def match(h1, h2, h2ps):
 
 # 得到p2h（picture --- perceptual hash）
 def get_p2h(join):
+    print("得到p2h（picture --- perceptual hash）")
     if os.path.isfile(P2H):
         with open(P2H) as f:
             p2h = pickle.load(f)
@@ -103,16 +108,19 @@ def get_p2h(join):
                     if s1 < s2:
                         s1, s2 = s2, s1
                         h2h[s1] = s2
-        for p. h in p2h.items():
+        for p, h in p2h.items():
             h = str(h)
             if h in h2h:
                 h = h2h[h]
             p2h[p] = h
+        data_output = open(P2H, 'wb')
+        pickle.dump(p2h, data_output)
     return p2h
 
 
 # 获取h2ps
 def get_h2ps(p2h):
+    print("获取h2ps")
     h2ps = {}
     for p, h in p2h.items():
         if h not in h2ps:
@@ -158,6 +166,7 @@ def prefer(ps, p2size):
 
 
 def get_h2p(h2ps):
+    print("获取h2p")
     h2p = {}
     for h, ps in h2ps.items():
         h2p[h] = prefer(ps)
@@ -166,6 +175,7 @@ def get_h2p(h2ps):
 
 # 读取boundingbox数据
 def get_bb():
+    print("获取boundingbox数据")
     p2bb = pd.read_csv(BB_DF).set_index('Image')
     return p2bb
 

@@ -37,8 +37,7 @@ class TrainingData(Sequence):
             idxs = [t2i[t] for t in ts]
             for i in idxs:
                 for j in idxs:
-                    self.score[
-                        i, j] = 10000.0  # Set a large value for matching whales -- eliminates this potential pairing
+                    self.score[i, j] = 10000.0  # Set a large value for matching whales -- eliminates this potential pairing
         self.on_epoch_end()
 
     def __getitem__(self, index):
@@ -244,7 +243,8 @@ steps = 0
 if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
     tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
     model.set_weights(tmp.get_weights())
-else:
+#else:
+if True:
     # epoch -> 10
     make_steps(10, 1000)
     ampl = 100.0

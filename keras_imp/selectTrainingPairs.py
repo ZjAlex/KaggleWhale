@@ -1,7 +1,7 @@
 import random
 import numpy as np
 from keras.utils import Sequence
-from keras_imp.preprocess import *
+from preprocess import *
 from lap import lapjv
 
 

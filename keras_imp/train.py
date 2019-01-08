@@ -1,6 +1,6 @@
-from keras_imp.Model import *
-from keras_imp.preprocess import *
-from keras_imp.selectTrainingPairs import *
+from Model import *
+from preprocess import *
+from selectTrainingPairs import *
 import keras
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '3'

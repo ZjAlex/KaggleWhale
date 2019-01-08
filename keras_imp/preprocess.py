@@ -176,7 +176,7 @@ def get_h2p(h2ps, p2size):
 # 读取boundingbox数据
 def get_bb():
     print("获取boundingbox数据")
-    p2bb = pd.read_csv(BB_DF).set_index('Image')
+    p2bb = pd.read_csv(open(BB_DF)).set_index('Image')
     return p2bb
 
 

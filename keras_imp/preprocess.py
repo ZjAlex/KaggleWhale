@@ -10,7 +10,7 @@ import math
 import matplotlib.pyplot as plt
 import random
 import keras.backend as K
-from keras.preprocessing.image import img_to_array, array_to_img, apply_affine_transform
+from keras.preprocessing.image import img_to_array, array_to_img
 from scipy.ndimage import affine_transform
 
 # 文件路径
@@ -275,7 +275,7 @@ def read_for_validation(p, h2p, p2bb, p2size):
     return read_cropped_image(p, h2p, p2bb, p2size, augment=False)
 
 
-def test_image_transform(tagged, h2p, p2bb, p2size):
+def test_image_transform(p, tagged, h2p, p2bb, p2size):
     imgs = [
         read_raw_image(p),
         array_to_img(read_for_validation(p, h2p, p2bb, p2size)),

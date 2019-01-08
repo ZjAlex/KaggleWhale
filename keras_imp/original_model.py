@@ -643,36 +643,36 @@ if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
 #else:
 if True:
     # epoch -> 10
-    make_steps(10, 1000)
-    ampl = 100.0
-    for _ in range(2):
-        print('noise ampl.  = ', ampl)
-        make_steps(5, ampl)
-        ampl = max(1.0, 100 ** -0.1 * ampl)
-    # epoch -> 150
-    for _ in range(18): make_steps(5, 1.0)
+    make_steps(5, 1000)
+    # ampl = 100.0
+    # for _ in range(2):
+    #     print('noise ampl.  = ', ampl)
+    #     make_steps(5, ampl)
+    #     ampl = max(1.0, 100 ** -0.1 * ampl)
+    # # epoch -> 150
+    # for _ in range(18): make_steps(5, 1.0)
     # epoch -> 200
     set_lr(model, 16e-5)
-    for _ in range(10): make_steps(5, 0.5)
+    for _ in range(1): make_steps(5, 0.5)
     # epoch -> 240
     set_lr(model, 4e-5)
-    for _ in range(8): make_steps(5, 0.25)
+    for _ in range(1): make_steps(5, 0.25)
     # epoch -> 250
     set_lr(model, 1e-5)
-    for _ in range(2): make_steps(5, 0.25)
+    for _ in range(1): make_steps(5, 0.25)
     # epoch -> 300
     weights = model.get_weights()
     model, branch_model, head_model = build_model(64e-5, 0.0002)
     model.set_weights(weights)
-    for _ in range(10): make_steps(5, 1.0)
+    for _ in range(1): make_steps(5, 1.0)
     # epoch -> 350
     set_lr(model, 16e-5)
-    for _ in range(10): make_steps(5, 0.5)
+    for _ in range(1): make_steps(5, 0.5)
     # epoch -> 390
     set_lr(model, 4e-5)
-    for _ in range(8): make_steps(5, 0.25)
+    for _ in range(1): make_steps(5, 0.25)
     # epoch -> 400
     set_lr(model, 1e-5)
-    for _ in range(2): make_steps(5, 0.25)
+    for _ in range(1): make_steps(5, 0.25)
     model.save('standard.model')
 

@@ -27,7 +27,7 @@ from keras.preprocessing.image import img_to_array
 from keras.utils import Sequence
 from pandas import read_csv
 from scipy.ndimage import affine_transform
-from tqdm import tqdm_notebook as tqdm
+from tqdm import tqdm
 import time
 import os
 

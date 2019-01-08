@@ -50,11 +50,11 @@ class TrainingData(Sequence):
         c = np.zeros((size, 1), dtype=K.floatx())
         j = start // 2
         for i in range(0, size, 2):
-            a[i, :, :, :] = read_for_training(self.match[j][0])
-            b[i, :, :, :] = read_for_training(self.match[j][1])
+            a[i, :, :, :] = read_for_training(self.match[j][0], h2p, p2bb, p2size)
+            b[i, :, :, :] = read_for_training(self.match[j][1], h2p, p2bb, p2size)
             c[i, 0] = 1  # This is a match
-            a[i + 1, :, :, :] = read_for_training(self.unmatch[j][0])
-            b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1])
+            a[i + 1, :, :, :] = read_for_training(self.unmatch[j][0], h2p, p2bb, p2size)
+            b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1], h2p, p2bb, p2size)
             c[i + 1, 0] = 0  # Different whales
             j += 1
         return [a, b], c
@@ -111,7 +111,7 @@ class FeatureGen(Sequence):
         start = self.batch_size * index
         size = min(len(self.data) - start, self.batch_size)
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
-        for i in range(size): a[i, :, :, :] = read_for_validation(self.data[start + i])
+        for i in range(size): a[i, :, :, :] = read_for_validation(self.data[start + i], h2p, p2bb, p2size)
         if self.verbose > 0:
             self.progress.update()
             if self.progress.n >= len(self): self.progress.close()

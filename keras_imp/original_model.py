@@ -457,7 +457,10 @@ class TrainingData(Sequence):
         self.steps -= 1
         self.match = []
         self.unmatch = []
+        print("计算unmatch pairs")
+        start0 = time.time()
         _, _, x = lapjv(self.score)  # Solve the linear assignment problem
+        print("计算unmatch pairs结束,花费时间： " + str(time.time() - start0))
         y = np.arange(len(x), dtype=np.int32)
 
         # Compute a derangement for matching whales
@@ -489,11 +492,6 @@ class TrainingData(Sequence):
     def __len__(self):
         return (len(self.match) + len(self.unmatch) + self.batch_size - 1) // self.batch_size
 
-
-# Test on a batch of 32 with random costs.
-score = np.random.random_sample(size=(len(train), len(train)))
-data = TrainingData(score)
-(a, b), c = data[0]
 
 
 # A Keras generator to evaluate only the BRANCH MODEL
@@ -641,6 +639,7 @@ if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
     tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
     model.set_weights(tmp.get_weights())
 #else:
+print('training')
 if True:
     # # epoch -> 10
     # make_steps(5, 1000)

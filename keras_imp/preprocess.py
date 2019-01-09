@@ -42,7 +42,7 @@ def expand_path(p):
 
 
 # 得到每个图像的大小
-def get_iamges_size(join):
+def get_p2size(join):
     print("得到每个图像的大小")
     if os.path.isfile(P2SIZE):
         print("P2SIZE already exists!")

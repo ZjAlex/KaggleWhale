@@ -30,14 +30,14 @@ def main(args):
     features = None
     score = None
     if args.stage == 'train':
-        train(model, branch_model, head_model, w2ts, t2i, steps, features, score,
+        train_stage(model, branch_model, head_model, w2ts, t2i, steps, features, score,
             histories, train, w2hs, train_set, h2p, p2bb, p2size)
     if args.stage == 'test':
-        submit(model, branch_model, head_model, w2ts, t2i, steps, features, score,
+        submit_stage(model, branch_model, head_model, w2ts, t2i, steps, features, score,
             histories, train, w2hs, train_set, h2p, p2bb, p2size, tagged, p2h)
 
 
-def train(model, branch_model, head_model, w2ts, t2i, steps, features, score,
+def train_stage(model, branch_model, head_model, w2ts, t2i, steps, features, score,
                histories, train, w2hs, train_set, h2p, p2bb, p2size):
     if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
         tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
@@ -52,7 +52,7 @@ def train(model, branch_model, head_model, w2ts, t2i, steps, features, score,
         model.save('standard_train_10epochs.model')
 
 
-def submit(model, branch_model, head_model, w2ts, t2i, steps, features, score,
+def submit_stage(model, branch_model, head_model, w2ts, t2i, steps, features, score,
                histories, train, w2hs, train_set, h2p, p2bb, p2size, tagged, p2h):
     if os.path.isfile('/home/zhangjie/KaggleWhale/standard_train_10epochs.model'):
         tmp = keras.models.load_model('/home/zhangjie/KaggleWhale/standard_train_10epochs.model')

@@ -541,7 +541,7 @@ steps = 0
 
 if stage == 'train':
     if os.path.isfile('/home/zhangjie/KaggleWhale/ori_model_weights.h5'):
-        model.load_weights('/home/zhangjie/KaggleWhale/ori_model_weights.h5', by_name=True)
+        model.load_weights('/home/zhangjie/KaggleWhale/ori_model_weights.h5', by_name=True, skip_mismatch=True)
         #model.set_weights(tmp.get_weights())
         #model.save_weights('ori_model_weights.h5')
     print('training')
@@ -581,7 +581,7 @@ if stage == 'train':
         model.save_weights('attention_model_weights.h5')
 
 if os.path.isfile('/home/zhangjie/KaggleWhale/attention_model_weights.h5'):
-    model.load_weights('/home/zhangjie/KaggleWhale/attention_model_weights.h5', by_name=True)
+    model.load_weights('/home/zhangjie/KaggleWhale/attention_model_weights.h5', by_name=True, skip_mismatch=True)
     #model.set_weights(tmp.get_weights())
 
 

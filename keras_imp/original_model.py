@@ -31,7 +31,7 @@ from tqdm import tqdm
 import time
 import os
 import sys
-from keras_imp.Model import build_model
+from Model import build_model
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 

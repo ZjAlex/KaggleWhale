@@ -19,7 +19,7 @@ def subblock(x, filter, block, num, **kwargs):
     return y
 
 
-def build_model(lr, l2, activation='sigmoid'):
+def build_model(lr, l2, activation='sigmoid', img_shape=(384, 384, 1)):
     ##############
     # BRANCH MODEL
     ##############

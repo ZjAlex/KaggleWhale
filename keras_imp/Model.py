@@ -1,7 +1,7 @@
 from keras import regularizers
 from keras.optimizers import Adam
 from keras.engine.topology import Input
-from keras.layers import Activation, Add, BatchNormalization, Concatenate, Conv2D, Dense, Flatten, GlobalMaxPooling2D, Lambda, MaxPooling2D, Reshape
+from keras.layers import Activation, Add, BatchNormalization, Concatenate, Conv2D, Dense, Flatten, GlobalMaxPooling2D, Lambda, MaxPooling2D, Reshape,Multiply
 from keras.models import Model
 import keras.backend as K
 
@@ -14,6 +14,20 @@ def subblock(x, filter, **kwargs):
     y = BatchNormalization()(y)
     y = Conv2D(K.int_shape(x)[-1], (1, 1), **kwargs)(y)  # no activation # Restore the number of original features
     y = BatchNormalization()(y)
+
+    spatial_attention = Conv2D(K.int_shape(y)[-1] // 2, kernel_size=(1, 1), strides=(1, 1), activation='relu',
+                               name='sa_conv1')(y)
+    spatial_attention = Conv2D(1, kernel_size=(1, 1), strides=(1, 1), activation='sigmoid', name='sa_conv2')(spatial_attention)
+
+    channel_attention = GlobalMaxPooling2D(name='ca_gmp')(y)
+    channel_attention = Reshape(target_shape=(-1, K.int_shape(channel_attention)[-1]), name='ca_reshape1')(channel_attention)
+    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='relu', name='ca_dense1')(channel_attention)
+    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='softmax', name='ca_dense2')(channel_attention)
+    channel_attention = Reshape(target_shape=(-1, 1, K.int_shape(channel_attention)[-1]), name='ca_reshape2')(channel_attention)
+
+    y = Multiply()([y, channel_attention])
+    y = Multiply()([y, spatial_attention])
+
     y = Add()([x, y])  # Add the bypass connection
     y = Activation('relu')(y)
     return y

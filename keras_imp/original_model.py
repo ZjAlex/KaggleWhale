@@ -646,8 +646,8 @@ if stage == 'train':
             ampl = max(1.0, 100 ** -0.1 * ampl)
         model.save('standard_train_10epochs.model')
 
-if os.path.isfile('/home/zhangjie/KWhaleData/piotte/standard_train_10epochs.model'):
-    tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/standard_train_10epochs.model')
+if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
+    tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
     model.set_weights(tmp.get_weights())
 
 

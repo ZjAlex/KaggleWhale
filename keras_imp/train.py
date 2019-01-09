@@ -8,6 +8,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 def main(args):
     print(args)
+    print(args.stage)
     img_shape = (384, 384, 1)  # The image shape used by the model
     anisotropy = 2.15  # The horizontal compression ratio
     crop_margin = 0.05  # The margin added around the bounding box to compensate for bounding box inaccuracy

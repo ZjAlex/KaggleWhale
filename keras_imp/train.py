@@ -31,10 +31,10 @@ def main(args):
     score = None
     if args.stage == 'train':
         train_stage(model, branch_model, head_model, w2ts, t2i, steps, features, score,
-            histories, train, w2hs, train_set, h2p, p2bb, p2size)
+               histories, train, w2hs, train_set, h2p, p2bb, p2size)
     if args.stage == 'test':
         submit_stage(model, branch_model, head_model, w2ts, t2i, steps, features, score,
-            histories, train, w2hs, train_set, h2p, p2bb, p2size, tagged, p2h)
+               histories, train, w2hs, train_set, h2p, p2bb, p2size, tagged, p2h,submmit)
 
 
 def train_stage(model, branch_model, head_model, w2ts, t2i, steps, features, score,
@@ -53,7 +53,7 @@ def train_stage(model, branch_model, head_model, w2ts, t2i, steps, features, sco
 
 
 def submit_stage(model, branch_model, head_model, w2ts, t2i, steps, features, score,
-               histories, train, w2hs, train_set, h2p, p2bb, p2size, tagged, p2h):
+               histories, train, w2hs, train_set, h2p, p2bb, p2size, tagged, p2h,submmit):
     if os.path.isfile('/home/zhangjie/KaggleWhale/standard_train_10epochs.model'):
         tmp = keras.models.load_model('/home/zhangjie/KaggleWhale/standard_train_10epochs.model')
         model.set_weights(tmp.get_weights())
@@ -70,7 +70,7 @@ def submit_stage(model, branch_model, head_model, w2ts, t2i, steps, features, sc
         pos = [0, 0, 0, 0, 0, 0]
         with open(filename, 'wt', newline='\n') as f:
             f.write('Image,Id\n')
-            for i, p in enumerate(tqdm(submit)):
+            for i, p in enumerate(tqdm(submmit)):
                 t = []
                 s = set()
                 a = score[i, :]
@@ -112,7 +112,7 @@ def submit_stage(model, branch_model, head_model, w2ts, t2i, steps, features, sc
 
     # Evaluate the model.
     fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
-    fsubmit = branch_model.predict_generator(FeatureGen(submit), max_queue_size=20, workers=10, verbose=0)
+    fsubmit = branch_model.predict_generator(FeatureGen(submmit), max_queue_size=20, workers=10, verbose=0)
     score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
     score = score_reshape(score, fknown, fsubmit)
 

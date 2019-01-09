@@ -92,11 +92,11 @@ class TrainingData(Sequence):
         c = np.zeros((size, 1), dtype=K.floatx())
         j = start // 2
         for i in range(0, size, 2):
-            a[i, :, :, :] = read_for_training(self.match[j][0], self.h2p, self.p2size, self.p2size)
-            b[i, :, :, :] = read_for_training(self.match[j][1], self.h2p, self.p2size, self.p2size)
+            a[i, :, :, :] = read_for_training(self.match[j][0], self.h2p, self.p2bb, self.p2size)
+            b[i, :, :, :] = read_for_training(self.match[j][1], self.h2p, self.p2bb, self.p2size)
             c[i, 0] = 1  # This is a match
-            a[i + 1, :, :, :] = read_for_training(self.unmatch[j][0], self.h2p, self.p2size, self.p2size)
-            b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1], self.h2p, self.p2size, self.p2size)
+            a[i + 1, :, :, :] = read_for_training(self.unmatch[j][0], self.h2p, self.p2bb, self.p2size)
+            b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1], self.h2p, self.p2bb, self.p2size)
             c[i + 1, 0] = 0  # Different whales
             j += 1
         return [a, b], c
@@ -158,7 +158,7 @@ class FeatureGen(Sequence):
         size = min(len(self.data) - start, self.batch_size)
         a = np.zeros((size,) + self.img_shape, dtype=K.floatx())
         for i in range(size):
-            a[i, :, :, :] = read_for_validation(self.data[start + i], self.h2p, self.p2size, self.p2size)
+            a[i, :, :, :] = read_for_validation(self.data[start + i], self.h2p, self.p2bb, self.p2size)
         if self.verbose > 0:
             self.progress.update()
             if self.progress.n >= len(self): self.progress.close()
@@ -243,7 +243,7 @@ def compute_score(branch_model, head_model, train, h2p, p2bb, p2size, verbose=1)
 
 
 def make_steps(step, ampl, w2ts, t2i, steps, features, score,
-               histories, train, w2hs, train_set, h2p, p2bb, p2size, model, branch_model, head_model):
+                       histories, train, w2hs, train_set, h2p, p2bb, p2size, model, branch_model, head_model):
 
     #global w2ts, t2i, steps, features, score, histories
 

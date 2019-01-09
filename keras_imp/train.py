@@ -3,7 +3,7 @@ from selectTrainingPairs import *
 import keras
 import sys
 import argparse
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 
 def main(args):

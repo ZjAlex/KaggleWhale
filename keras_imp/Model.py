@@ -6,57 +6,63 @@ from keras.models import Model
 import keras.backend as K
 
 
-def subblock(x, filter, **kwargs):
-    y = BatchNormalization()(x)
-    # y = x
-    # 减小特征的channels，减小计算量
-    y = Conv2D(filter, (1, 1), activation='relu', **kwargs)(y)
-    y = BatchNormalization()(y)
-    y = Conv2D(filter, (3, 3), activation='relu', **kwargs)(y)
-    y = BatchNormalization()(y)
-    y = Conv2D(K.int_shape(x)[-1], (1, 1), **kwargs)(y)
-    # y = BatchNormalization()(y)
-    y = Add()([x, y])
-    y = Activation('relu')(y)
+def subblock(x, filter, block, num, **kwargs):
+    x = BatchNormalization(name='bn_' + block + '_' + str(num) + '_1')(x)
+    y = x
+    y = Conv2D(filter, (1, 1), activation='relu', name='conv_' + block + '_' + str(num) + '_1', **kwargs)(y)  # Reduce the number of features to 'filter'
+    y = BatchNormalization(name='bn_' + block + '_' + str(num) + '_2')(y)
+    y = Conv2D(filter, (3, 3), activation='relu', name='conv_' + block + '_' + str(num) + '_2', **kwargs)(y)  # Extend the feature field
+    y = BatchNormalization(name='bn_' + block + '_' + str(num) + '_3')(y)
+    y = Conv2D(K.int_shape(x)[-1], (1, 1), name='conv_' + block + '_' + str(num) + '_3', **kwargs)(y)  # no activation # Restore the number of original features
+    y = Add(name='add_' + block + '_' + str(num) + '_1')([x, y])  # Add the bypass connection
+    y = Activation('relu', name='activation_' + block + '_' + str(num) + '_1')(y)
     return y
 
 
-def build_model(lr, l2, img_shape=(384, 384, 1),activation='sigmoid'):
-    reg = regularizers.l2(l2)
-    opt = Adam(lr=lr)
-    kwargs = {'padding':'same', 'kernel_regularizer':reg}
+def build_model(lr, l2, activation='sigmoid'):
+    ##############
+    # BRANCH MODEL
+    ##############
+    regul = regularizers.l2(l2)
+    optim = Adam(lr=lr)
+    kwargs = {'padding': 'same', 'kernel_regularizer': regul}
 
     inp = Input(shape=img_shape)  # 384x384x1
-    x = Conv2D(64, (9, 9), strides=2, activation='relu', **kwargs)(inp)
-    x = MaxPooling2D((2, 0.2), strides=(2, 2))(x)  # 96x96x64
-    for _ in range(2):
-        x = BatchNormalization()(x)
-        x = Conv2D(64, (3, 3), activation='relu', **kwargs)(x)
-    x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 48x48x64
-    x = BatchNormalization()(x)
-    x = Conv2D(128, (1, 1), activation='relu', **kwargs)(x)
-    for _ in range(4):
-        x = subblock(x, 64, **kwargs)
+    x = Conv2D(64, (9, 9), strides=2, activation='relu', name='conv1', **kwargs)(inp)
 
-    x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 24x24x128
-    x = BatchNormalization()(x)
-    x = Conv2D(256, (1, 1), activation='relu', **kwargs)(x)  # 24x24x256
-    for _ in range(4):
-        x = subblock(x, 64, **kwargs)
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='mp1')(x)  # 96x96x64
 
-    x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 12x12x256
-    x = BatchNormalization()(x)
-    x = Conv2D(384, (1, 1), activation='relu', **kwargs)(x)  # 12x12x384
-    for _ in range(4):
-        x = subblock(x, 96, **kwargs)
+    x = BatchNormalization(name='bn1')(x)
+    x = Conv2D(64, (3, 3), activation='relu', name='conv2',**kwargs)(x)
+    x = BatchNormalization(name='bn2')(x)
+    x = Conv2D(64, (3, 3), activation='relu', name='conv3',**kwargs)(x)
 
-    x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 6x6x384
-    x = BatchNormalization()(x)
-    x = Conv2D(512, (1, 1), activation='relu', **kwargs)(x)  # 6x6x512
-    for _ in range(4):
-        x = subblock(x, 128, **kwargs)
 
-    x = GlobalMaxPooling2D()(x)  # 512
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='mp2')(x)  # 48x48x64
+    x = BatchNormalization(name='bn3')(x)
+    x = Conv2D(128, (1, 1), activation='relu', name='conv4', **kwargs)(x)  # 48x48x128
+    for i in range(4):
+        x = subblock(x, 64, '1', i, **kwargs)
+
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='mp3')(x)  # 24x24x128
+    x = BatchNormalization(name='bn4')(x)
+    x = Conv2D(256, (1, 1), activation='relu', name='conv5', **kwargs)(x)  # 24x24x256
+    for i in range(4):
+        x = subblock(x, 64, '2', i, **kwargs)
+
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='mp4')(x)  # 12x12x256
+    x = BatchNormalization(name='bn5')(x)
+    x = Conv2D(384, (1, 1), activation='relu', name='conv6', **kwargs)(x)  # 12x12x384
+    for i in range(4):
+        x = subblock(x, 96, '3', i, **kwargs)
+
+    x = MaxPooling2D((2, 2), strides=(2, 2), name='mp5')(x)  # 6x6x384
+    x = BatchNormalization(name='bn6')(x)
+    x = Conv2D(512, (1, 1), activation='relu', name='conv7', **kwargs)(x)  # 6x6x512
+    for i in range(4):
+        x = subblock(x, 128, '4', i, **kwargs)
+
+    x = GlobalMaxPooling2D(name='gmp')(x)  # 512
     branch_model = Model(inp, x)
 
     ############
@@ -73,9 +79,9 @@ def build_model(lr, l2, img_shape=(384, 384, 1),activation='sigmoid'):
     x = Reshape((4, branch_model.output_shape[1], 1), name='reshape1')(x)
 
     # Per feature NN with shared weight is implemented using CONV2D with appropriate stride.
-    x = Conv2D(mid, (4, 1), activation='relu', padding='valid')(x)
+    x = Conv2D(mid, (4, 1), activation='relu', padding='valid', name='head_conv1')(x)
     x = Reshape((branch_model.output_shape[1], mid, 1))(x)
-    x = Conv2D(1, (1, mid), activation='linear', padding='valid')(x)
+    x = Conv2D(1, (1, mid), activation='linear', padding='valid', name='head_conv2')(x)
     x = Flatten(name='flatten')(x)
 
     # Weighted sum implemented as a Dense layer.
@@ -93,5 +99,5 @@ def build_model(lr, l2, img_shape=(384, 384, 1),activation='sigmoid'):
     xb = branch_model(img_b)
     x = head_model([xa, xb])
     model = Model([img_a, img_b], x)
-    model.compile(opt, loss='binary_crossentropy', metrics=['binary_crossentropy', 'acc'])
+    model.compile(optim, loss='binary_crossentropy', metrics=['binary_crossentropy', 'acc'])
     return model, branch_model, head_model

@@ -8,7 +8,7 @@ import keras.backend as K
 
 def subblock(x, filter, **kwargs):
     #y = BatchNormalization()(x)
-    y = Conv2D(filter, (1, 1), activation='relu', **kwargs)(y)  # Reduce the number of features to 'filter'
+    y = Conv2D(filter, (1, 1), activation='relu', **kwargs)(x)  # Reduce the number of features to 'filter'
     y = BatchNormalization()(y)
     y = Conv2D(filter, (3, 3), activation='relu', **kwargs)(y)  # Extend the feature field
     y = BatchNormalization()(y)

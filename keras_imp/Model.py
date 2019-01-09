@@ -6,7 +6,7 @@ from keras.models import Model
 import keras.backend as K
 
 
-def subblock(x, filter, **kwargs):
+def subblock(x, filter, block, num, **kwargs):
     #y = BatchNormalization()(x)
     y = Conv2D(filter, (1, 1), activation='relu', **kwargs)(x)  # Reduce the number of features to 'filter'
     y = BatchNormalization()(y)
@@ -16,17 +16,17 @@ def subblock(x, filter, **kwargs):
     y = BatchNormalization()(y)
 
     spatial_attention = Conv2D(K.int_shape(y)[-1] // 2, kernel_size=(1, 1), strides=(1, 1), activation='relu',
-                               name='sa_conv1')(y)
-    spatial_attention = Conv2D(1, kernel_size=(1, 1), strides=(1, 1), activation='sigmoid', name='sa_conv2')(spatial_attention)
+                               name=block + '_' + str(num) + 'sa_conv1')(y)
+    spatial_attention = Conv2D(1, kernel_size=(1, 1), strides=(1, 1), activation='sigmoid', name=block + '_' + str(num) + 'sa_conv2')(spatial_attention)
 
-    channel_attention = GlobalMaxPooling2D(name='ca_gmp')(y)
-    channel_attention = Reshape(target_shape=(-1, K.int_shape(channel_attention)[-1]), name='ca_reshape1')(channel_attention)
-    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='relu', name='ca_dense1')(channel_attention)
-    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='softmax', name='ca_dense2')(channel_attention)
-    channel_attention = Reshape(target_shape=(-1, 1, K.int_shape(channel_attention)[-1]), name='ca_reshape2')(channel_attention)
+    channel_attention = GlobalMaxPooling2D(name=block + '_' + str(num) + 'ca_gmp')(y)
+    channel_attention = Reshape(target_shape=(-1, K.int_shape(channel_attention)[-1]), name=block + '_' + str(num) + 'ca_reshape1')(channel_attention)
+    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='relu', name=block + '_' + str(num) + 'ca_dense1')(channel_attention)
+    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='softmax', name=block + '_' + str(num) + 'ca_dense2')(channel_attention)
+    channel_attention = Reshape(target_shape=(-1, 1, K.int_shape(channel_attention)[-1]), name=block + '_' + str(num) + 'ca_reshape2')(channel_attention)
 
-    y = Multiply()([y, channel_attention])
-    y = Multiply()([y, spatial_attention])
+    y = Multiply(name=block + '_' + str(num) + 'ml1')([y, channel_attention])
+    y = Multiply(name=block + '_' + str(num) + 'ml2')([y, spatial_attention])
 
     y = Add()([x, y])  # Add the bypass connection
     y = Activation('relu')(y)
@@ -52,29 +52,29 @@ def build_model(lr, l2, img_shape=(384, 384, 1),activation='sigmoid'):
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 48x48x64
     x = BatchNormalization()(x)
     x = Conv2D(128, (1, 1), activation='relu', **kwargs)(x)  # 48x48x128
-    for _ in range(4):
-        x = subblock(x, 64, **kwargs)
+    for i in range(4):
+        x = subblock(x, 64, '1', i, **kwargs)
 
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 24x24x128
     x = BatchNormalization()(x)
     x = Conv2D(256, (1, 1), activation='relu', **kwargs)(x)  # 24x24x256
     x = BatchNormalization()(x)
-    for _ in range(4):
-        x = subblock(x, 64, **kwargs)
+    for i in range(4):
+        x = subblock(x, 64, '2', i,  **kwargs)
 
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 12x12x256
     x = BatchNormalization()(x)
     x = Conv2D(384, (1, 1), activation='relu', **kwargs)(x)  # 12x12x384
     x = BatchNormalization()(x)
-    for _ in range(4):
-        x = subblock(x, 96, **kwargs)
+    for i in range(4):
+        x = subblock(x, 96, '3', i,  **kwargs)
 
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 6x6x384
     x = BatchNormalization()(x)
     x = Conv2D(512, (1, 1), activation='relu', **kwargs)(x)  # 6x6x512
     x = BatchNormalization()(x)
-    for _ in range(4):
-        x = subblock(x, 128, **kwargs)
+    for i in range(4):
+        x = subblock(x, 128, '4', i,  **kwargs)
 
     x = GlobalMaxPooling2D()(x)  # 512
     branch_model = Model(inp, x)

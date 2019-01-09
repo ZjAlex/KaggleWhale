@@ -543,6 +543,7 @@ if stage == 'train':
     if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
         tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
         model.set_weights(tmp.get_weights())
+        model.save_weights('ori_model_weights.h5')
     print('training')
     if True:
         # epoch -> 10

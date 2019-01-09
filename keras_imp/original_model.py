@@ -551,8 +551,8 @@ if stage != 'test':
         model.save('standard_train_10epochs.model')
 
 else:
-    if os.path.isfile('/home/zhangjie/KaggleWhale/standard_train_10epochs.model'):
-        tmp = keras.models.load_model('/home/zhangjie/KaggleWhale/standard_train_10epochs.model')
+    if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
+        tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
         model.set_weights(tmp.get_weights())
 
 

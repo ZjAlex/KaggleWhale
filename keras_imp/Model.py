@@ -19,6 +19,11 @@ def subblock(x, filter, block, num, **kwargs):
     return y
 
 
+def subblock_with_attention(x, filter, block, num, **kwargs):
+    y = BatchNormalization(name='bn_'+block+'_'+str(num)+'_1')(x)
+
+
+
 def build_model(lr, l2, activation='sigmoid', img_shape=(384, 384, 1)):
     ##############
     # BRANCH MODEL

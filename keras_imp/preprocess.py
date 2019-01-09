@@ -54,6 +54,7 @@ def get_iamges_size(join):
             p2size[p] = Image.open(expand_path(p)).size
         data_output = open(P2SIZE, 'wb')
         pickle.dump(p2size, data_output)
+        data_output.close()
     return p2size
 
 
@@ -115,6 +116,7 @@ def get_p2h(join):
             p2h[p] = h
         data_output = open(P2H, 'wb')
         pickle.dump(p2h, data_output)
+        data_output.close()
     return p2h
 
 
@@ -153,7 +155,8 @@ def show_images(h2ps):
 
 # 为每个类别选择一个最优的图像
 def prefer(ps, p2size):
-    if len(ps) == 1: return ps[0]
+    if len(ps) == 1:
+        return ps[0]
     best_p = ps[0]
     best_s = p2size[best_p]
     for i in range(1, len(ps)):

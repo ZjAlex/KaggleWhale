@@ -639,7 +639,7 @@ if stage == 'train':
     if True:
         # # epoch -> 10
         # make_steps(10, 1000)
-        # ampl = 100.0
+        ampl = 100.0
         for _ in range(2):
            print('noise ampl.  = ', ampl)
            make_steps(5, ampl)

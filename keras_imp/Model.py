@@ -52,6 +52,7 @@ def build_model(lr, l2, img_shape=(384, 384, 1),activation='sigmoid'):
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 48x48x64
     x = BatchNormalization()(x)
     x = Conv2D(128, (1, 1), activation='relu', **kwargs)(x)  # 48x48x128
+    x = BatchNormalization()(x)
     for i in range(4):
         x = subblock(x, 64, '1', i, **kwargs)
 

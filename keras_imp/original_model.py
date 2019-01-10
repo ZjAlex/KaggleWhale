@@ -540,8 +540,8 @@ histories = []
 steps = 0
 
 if stage == 'train':
-    if os.path.isfile('/home/zhangjie/KaggleWhale/ori_model_weights.h5'):
-        model.load_weights('/home/zhangjie/KaggleWhale/ori_model_weights.h5', by_name=True, skip_mismatch=True, reshape=True)
+    #if os.path.isfile('/home/zhangjie/KaggleWhale/ori_model_weights.h5'):
+    #    model.load_weights('/home/zhangjie/KaggleWhale/ori_model_weights.h5', by_name=True, skip_mismatch=True, reshape=True)
         #model.set_weights(tmp.get_weights())
         #model.save_weights('ori_model_weights.h5')
     print('training')
@@ -553,8 +553,8 @@ if stage == 'train':
             print('noise ampl.  = ', ampl)
             make_steps(5, ampl)
             ampl = max(1.0, 100 ** -0.1 * ampl)
-        #     # epoch -> 150
-        #     for _ in range(18): make_steps(5, 1.0)
+            # epoch -> 150
+            for _ in range(5): make_steps(5, 1.0)
         #     # epoch -> 200
         #     set_lr(model, 16e-5)
         #     for _ in range(10): make_steps(5, 0.5)

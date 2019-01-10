@@ -33,7 +33,7 @@ import os
 import sys
 from Model import build_model
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2,3'
 
 TRAIN_DF = '/home/zhangjie/KWhaleData/train.csv'
 SUB_Df = '/home/zhangjie/KWhaleData/sample_submission.csv'

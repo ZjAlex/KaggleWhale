@@ -632,22 +632,22 @@ histories = []
 steps = 0
 
 if stage == 'train':
-    if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
-        tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
-        model.set_weights(tmp.get_weights())
+    #if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
+    #    tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
+    #    model.set_weights(tmp.get_weights())
     print('training')
     if True:
         # epoch -> 10
         make_steps(10, 1000)
         ampl = 100.0
-        for _ in range(2):
-            print('noise ampl.  = ', ampl)
-            make_steps(5, ampl)
-            ampl = max(1.0, 100 ** -0.1 * ampl)
-        model.save('standard_train_10epochs.model')
+        #for _ in range(2):
+        #    print('noise ampl.  = ', ampl)
+        #    make_steps(5, ampl)
+        #    ampl = max(1.0, 100 ** -0.1 * ampl)
+        model.save('orimodel_10epochs.model')
 
-if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
-    tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
+if os.path.isfile('/home/zhangjie/KaggleWhale/orimodel_10epochs.model'):
+    tmp = keras.models.load_model('/home/zhangjie/KaggleWhale/orimodel_10epochs.model')
     model.set_weights(tmp.get_weights())
 
 

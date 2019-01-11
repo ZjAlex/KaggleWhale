@@ -556,8 +556,8 @@ if stage == 'train':
         # epoch -> 150
         #for _ in range(5): make_steps(5, 1.0)
         # epoch -> 200
-        #set_lr(model, 16e-5)
-        for _ in range(2):
+        set_lr(model, 1e-5)
+        for _ in range(1):
             make_steps(5, 1.0)
         #     # epoch -> 240
         #     set_lr(model, 4e-5)

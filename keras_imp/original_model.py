@@ -9,7 +9,6 @@ from lap import lapjv
 from math import sqrt
 # Determine the size of each image
 from os.path import isfile
-
 import keras
 import matplotlib.pyplot as plt
 import numpy as np
@@ -389,28 +388,6 @@ for w, hs in w2hs.items():
         w2hs[w] = sorted(hs)
 
 
-# train = []  # A list of training image ids
-# for hs in w2hs.values():
-#     if len(hs) > 1:
-#         train += hs
-# random.shuffle(train)
-# train_set = set(train)
-#
-# w2ts = {}  # Associate the image ids from train to each whale id.
-# for w, hs in w2hs.items():
-#     for h in hs:
-#         if h in train_set:
-#             if w not in w2ts:
-#                 w2ts[w] = []
-#             if h not in w2ts[w]:
-#                 w2ts[w].append(h)
-# for w, ts in w2ts.items():
-#     w2ts[w] = np.array(ts)
-#
-# t2i = {}  # The position in train of each training image id
-# for i, t in enumerate(train):
-#     t2i[t] = i
-#
 all_data = []  # A list of training image ids
 for hs in w2hs.values():
     if len(hs) > 1:
@@ -459,10 +436,6 @@ for i, v in enumerate(test):
 
 class TestingData(Sequence):
     def __init__(self, batch_size=32):
-        """
-        @param score the cost matrix for the picture matching
-        @param steps the number of epoch we are planning with this score matrix
-        """
         super(TestingData, self).__init__()
         np.random.seed(10)
         self.score = -1 * np.random.random_sample(size=(len(test), len(test)))
@@ -569,10 +542,10 @@ class TrainingData(Sequence):
         self.steps -= 1
         self.match = []
         self.unmatch = []
-        print("计算unmatch pairs")
-        start0 = time.time()
+        #print("计算unmatch pairs")
+        #start0 = time.time()
         _, _, x = lapjv(self.score)  # Solve the linear assignment problem
-        print("计算unmatch pairs结束,花费时间： " + str(time.time() - start0))
+        #print("计算unmatch pairs结束,花费时间： " + str(time.time() - start0))
         y = np.arange(len(x), dtype=np.int32)
 
         # Compute a derangement for matching whales

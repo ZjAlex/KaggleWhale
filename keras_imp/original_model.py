@@ -557,7 +557,7 @@ if stage == 'train':
         #for _ in range(5): make_steps(5, 1.0)
         # epoch -> 200
         set_lr(model, 1e-5)
-        for _ in range(1):
+        for _ in range(2):
             make_steps(5, 1.0)
         #     # epoch -> 240
         #     set_lr(model, 4e-5)
@@ -579,10 +579,10 @@ if stage == 'train':
         #     # epoch -> 400
         #     set_lr(model, 1e-5)
         #     for _ in range(2): make_steps(5, 0.25)
-        model.save_weights('attention_80epochs_model_weights.h5')
+        model.save_weights('attention_90epochs_model_weights.h5')
 
-if os.path.isfile('/home/zhangjie/KaggleWhale/attention_85epochs_model_weights.h5'):
-    model.load_weights('/home/zhangjie/KaggleWhale/attention_85epochs_model_weights.h5', by_name=True, skip_mismatch=True)
+#if os.path.isfile('/home/zhangjie/KaggleWhale/attention_85epochs_model_weights.h5'):
+#    model.load_weights('/home/zhangjie/KaggleWhale/attention_85epochs_model_weights.h5', by_name=True, skip_mismatch=True)
     #model.set_weights(tmp.get_weights())
 
 

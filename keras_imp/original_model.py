@@ -411,12 +411,10 @@ for w, hs in w2hs.items():
 # for i, t in enumerate(train):
 #     t2i[t] = i
 #
-# all_data = []  # A list of training image ids
-# for hs in w2hs.values():
-#     if len(hs) > 1:
-#         all_data += hs
-# # random.shuffle(all_data)
-# # train_set = set(all_data)
+all_data = []  # A list of training image ids
+for hs in w2hs.values():
+    if len(hs) > 1:
+        all_data += hs
 
 from sklearn.model_selection import train_test_split
 train, test = train_test_split(all_data, test_size=0.1, shuffle=False)

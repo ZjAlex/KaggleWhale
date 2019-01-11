@@ -33,6 +33,19 @@ import os
 import sys
 from Model import build_model
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('--input_path', type=int, help='how many epochs you have trained decide the input model path')
+parser.add_argument('--output_path', type=int, help='how many epochs you will train')
+parser.add_argument('--stage', type=str, help='train or test', default='train')
+parser.add_argument('--threshold', type=float, help='threshold to decide the new whale to insert', default=0.99)
+parser.add_argument('--lr', type=float, help='learning rate', default=1e-5)
+parser.add_argument('--epochs', type=int, help='how many epochs to iterate', default=1)
+parser.add_argument('--steps', type=int, help='how many steps one epoch', default=5)
+parser.add_argument('--reg', type=float, help='regularization rate', default=0.0)
+parser.add_argument('--noise', type=float, help='random noise to decide the difficult level of the trainning pairs', default=1.0)
+args = parser.parse_args(sys.argv[1:])
+
 os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 TRAIN_DF = '/home/zhangjie/KWhaleData/train.csv'
@@ -42,8 +55,6 @@ TEST = '/home/zhangjie/KWhaleData/test/'
 P2H = '/home/zhangjie/KWhaleData/metadata/p2h.pickle'
 P2SIZE = '/home/zhangjie/KWhaleData/metadata/p2size.pickle'
 BB_DF = '/home/zhangjie/KWhaleData/metadata/bounding_boxes.csv'
-
-stage = sys.argv[1]
 
 tagged = dict([(p, w) for _, p, w in read_csv(TRAIN_DF).to_records()])
 submit = [p for _, p, _ in read_csv(SUB_Df).to_records()]
@@ -271,7 +282,8 @@ def read_for_validation(p):
     """
     return read_cropped_image(p, False)
 
-model, branch_model, head_model = build_model(64e-5, 0)
+
+model, branch_model, head_model = build_model(64e-5, args.reg)
 
 
 h2ws = {}
@@ -625,54 +637,20 @@ def make_steps(step, ampl):
     print(history['epochs'], history['lr'], history['ms'])
     histories.append(history)
 
+
 histories = []
 steps = 0
 
-if stage == 'train':
-    if os.path.isfile('/home/zhangjie/KaggleWhale/attention_90epochs_model_weights.h5'):
-        model.load_weights('/home/zhangjie/KaggleWhale/attention_90epochs_model_weights.h5', by_name=True, skip_mismatch=True, reshape=True)
-        #model.set_weights(tmp.get_weights())
-        #model.save_weights('ori_model_weights.h5')
+if True:
+    if os.path.isfile('/home/zhangjie/KaggleWhale/attention_'+str(args.input_path)+'epochs_model_weights.h5'):
+        model.load_weights('/home/zhangjie/KaggleWhale/attention_'+str(args.input_path)+'epochs_model_weights.h5',
+                           by_name=True, skip_mismatch=True, reshape=True)
     print('training')
-    if True:
-        # # epoch -> 10
-        # make_steps(10, 1000)
-        # ampl = 100.0
-        # for _ in range(2):
-        #     print('noise ampl.  = ', ampl)
-        #     make_steps(5, ampl)
-        #     ampl = max(1.0, 100 ** -0.1 * ampl)
-        # epoch -> 150
-        #for _ in range(5): make_steps(5, 1.0)
-        # epoch -> 200
-        set_lr(model, 5e-5)
-        for _ in range(2):
-            make_steps(5, 1.0)
-        #     # epoch -> 240
-        #     set_lr(model, 4e-5)
-        #     for _ in range(8): make_steps(5, 0.25)
-        #     # epoch -> 250
-        #     set_lr(model, 1e-5)
-        #     for _ in range(2): make_steps(5, 0.25)
-        #     # epoch -> 300
-        #     weights = model.get_weights()
-        #     model, branch_model, head_model = build_model(64e-5, 0.0002)
-        #     model.set_weights(weights)
-        #     for _ in range(2): make_steps(5, 1.0)
-        #     # epoch -> 350
-        #     set_lr(model, 16e-5)
-        #     for _ in range(2): make_steps(5, 0.5)
-        #     # epoch -> 390
-        #     set_lr(model, 4e-5)
-        #     for _ in range(8): make_steps(5, 0.25)
-        #     # epoch -> 400
-        #     set_lr(model, 1e-5)
-        #     for _ in range(2): make_steps(5, 0.25)
-        model.save_weights('attention_100epochs_model_weights.h5')
-
-#if os.path.isfile('/home/zhangjie/KaggleWhale/attention_85epochs_model_weights.h5'):
-#    model.load_weights('/home/zhangjie/KaggleWhale/attention_85epochs_model_weights.h5', by_name=True, skip_mismatch=True)
-    #model.set_weights(tmp.get_weights())
+    if args.stage == 'train':
+        set_lr(model, args.lr)
+        for _ in range(args.epochs):
+            make_steps(args.steps, args.noise)
+        model.save_weights('attention_'+str(args.output_path)+'epochs_model_weights.h5')
 
 
 def prepare_submission(threshold, filename):
@@ -735,6 +713,6 @@ score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=2
 score = score_reshape(score, fknown, fsubmit)
 
 # Generate the subsmission file.
-prepare_submission(0.99, 'submission.csv')
+prepare_submission(args.threshold, 'submission.csv')
 toc = time.time()
 print("Submission time: ", (toc - tic) / 60.)

@@ -722,6 +722,30 @@ def make_steps(step, ampl):
         verbose=1, validation_data=TestingData()).history
     steps += step
 
+
+    h2kts = {}
+    for p, w in tagged.items():
+        if w != new_whale:  # Use only identified whales
+            h = p2h[p]
+            if h in train_set:
+                if h not in h2kts: h2kts[h] = []
+                if w not in h2kts[h]: h2kts[h].append(w)
+    known = sorted(list(h2kts.keys()))
+
+    # Dictionary of picture indices
+    h2i = {}
+    for i, h in enumerate(known): h2i[h] = i
+
+    # Evaluate the model.
+    fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
+    fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
+    score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+    score = score_reshape(score, fknown, fsubmit)
+    predictions = val_score(0.95)
+    labels = [tagged[h2p[h_]] for h_ in test]
+
+    print('cv score: ' + str(map_per_set(labels, predictions)))
+
     # Collect history data
     history['epochs'] = steps
     history['ms'] = np.mean(score)
@@ -734,8 +758,8 @@ histories = []
 steps = 0
 
 if stage == 'train':
-    if os.path.isfile('/home/zhangjie/KaggleWhale/orimodel_20epochs.model'):
-        tmp = keras.models.load_model('/home/zhangjie/KaggleWhale/orimodel_20epochs.model')
+    if os.path.isfile('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model'):
+        tmp = keras.models.load_model('/home/zhangjie/KWhaleData/piotte/mpiotte-standard.model')
         model.set_weights(tmp.get_weights())
     print('training')
     if True:
@@ -758,7 +782,8 @@ def val_score(threshold):
     vtop = 0
     vhigh = 0
     pos = [0, 0, 0, 0, 0, 0]
-    for i, p in enumerate(tqdm(submit)):
+    predictions = []
+    for i, p in enumerate(tqdm(test)):
         t = []
         s = set()
         a = score[i, :]
@@ -782,7 +807,8 @@ def val_score(threshold):
             if len(t) == 5: break;
         if new_whale not in s: pos[5] += 1
         assert len(t) == 5 and len(s) == 5
-    return vtop, vhigh, pos
+        predictions.append(t[:5])
+    return predictions
 
 
 def prepare_submission(threshold, filename):

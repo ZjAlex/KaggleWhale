@@ -297,12 +297,20 @@ for w, hs in w2hs.items():
         w2hs[w] = sorted(hs)
 
 
-train = []  # A list of training image ids
+all_data = []  # A list of training image ids
 for hs in w2hs.values():
     if len(hs) > 1:
-        train += hs
-random.shuffle(train)
+        all_data += hs
+
+from sklearn.model_selection import train_test_split
+train, test = train_test_split(all_data, test_size=0.1, shuffle=False)
+
 train_set = set(train)
+test_set = set(test)
+
+random.shuffle(train)
+random.shuffle(test)
+
 
 w2ts = {}  # Associate the image ids from train to each whale id.
 for w, hs in w2hs.items():
@@ -315,9 +323,89 @@ for w, hs in w2hs.items():
 for w, ts in w2ts.items():
     w2ts[w] = np.array(ts)
 
+w2vs = {}  # Associate the image ids from train to each whale id.
+for w, hs in w2hs.items():
+    for h in hs:
+        if h in test_set:
+            if w not in w2vs:
+                w2vs[w] = []
+            if h not in w2vs[w]:
+                w2vs[w].append(h)
+for w, ts in w2vs.items():
+    w2vs[w] = np.array(ts)
+
 t2i = {}  # The position in train of each training image id
 for i, t in enumerate(train):
     t2i[t] = i
+
+v2i = {}
+for i, v in enumerate(test):
+    v2i[v] = i
+
+
+class TestingData(Sequence):
+    def __init__(self, batch_size=32):
+        super(TestingData, self).__init__()
+        np.random.seed(10)
+        self.score = -1 * np.random.random_sample(size=(len(test), len(test)))
+        np.random.seed(None)
+        self.batch_size = batch_size
+        for vs in w2vs.values():
+            idxs = [v2i[v] for v in vs]
+            for i in idxs:
+                for j in idxs:
+                    self.score[
+                        i, j] = 10000.0  # Set a large value for matching whales -- eliminates this potential pairing
+        self.get_test_data()
+
+    def __getitem__(self, index):
+        start = self.batch_size * index
+        end = min(start + self.batch_size, len(self.match) + len(self.unmatch))
+        size = end - start
+        assert size > 0
+        a = np.zeros((size,) + img_shape, dtype=K.floatx())
+        b = np.zeros((size,) + img_shape, dtype=K.floatx())
+        c = np.zeros((size, 1), dtype=K.floatx())
+        j = start // 2
+        for i in range(0, size, 2):
+            a[i, :, :, :] = read_for_validation(self.match[j][0])
+            b[i, :, :, :] = read_for_validation(self.match[j][1])
+            c[i, 0] = 1  # This is a match
+            a[i + 1, :, :, :] = read_for_validation(self.unmatch[j][0])
+            b[i + 1, :, :, :] = read_for_validation(self.unmatch[j][1])
+            c[i + 1, 0] = 0  # Different whales
+            j += 1
+        return [a, b], c
+
+    def get_test_data(self):
+        self.match = []
+        self.unmatch = []
+        _, _, x = lapjv(self.score)  # Solve the linear assignment problem
+        y = np.arange(len(x), dtype=np.int32)
+
+        # Compute a derangement for matching whales
+        for vs in w2vs.values():
+            d = vs.copy()
+            while True:
+                random.shuffle(d)
+                if not np.any(vs == d): break
+            for ab in zip(vs, d): self.match.append(ab)
+
+        # Construct unmatched whale pairs from the LAP solution.
+        for i, j in zip(x, y):
+            if i == j:
+                print(self.score)
+                print(x)
+                print(y)
+                print(i, j)
+            assert i != j
+            self.unmatch.append((test[i], test[j]))
+
+        # print(len(self.match), len(train), len(self.unmatch), len(train))
+        assert len(self.match) == len(test) and len(self.unmatch) == len(test)
+
+    def __len__(self):
+        return (len(self.match) + len(self.unmatch) + self.batch_size - 1) // self.batch_size
 
 
 class TrainingData(Sequence):
@@ -363,10 +451,10 @@ class TrainingData(Sequence):
         self.steps -= 1
         self.match = []
         self.unmatch = []
-        print("计算unmatch pairs")
-        start0 = time.time()
+        # print("计算unmatch pairs")
+        # start0 = time.time()
         _, _, x = lapjv(self.score)  # Solve the linear assignment problem
-        print("计算unmatch pairs结束,花费时间： " + str(time.time() - start0))
+        # print("计算unmatch pairs结束,花费时间： " + str(time.time() - start0))
         y = np.arange(len(x), dtype=np.int32)
 
         # Compute a derangement for matching whales
@@ -526,7 +614,8 @@ def make_steps(step, ampl):
     # Train the model for 'step' epochs
     history = model.fit_generator(
         TrainingData(score + ampl * np.random.random_sample(size=score.shape), steps=step, batch_size=32),
-        initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6, verbose=1).history
+        initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
+        verbose=1, validation_data=TestingData()).history
     steps += step
 
     # Collect history data
@@ -540,8 +629,8 @@ histories = []
 steps = 0
 
 if stage == 'train':
-    if os.path.isfile('/home/zhangjie/KaggleWhale/attention_80epochs_model_weights.h5'):
-        model.load_weights('/home/zhangjie/KaggleWhale/attention_80epochs_model_weights.h5', by_name=True, skip_mismatch=True, reshape=True)
+    if os.path.isfile('/home/zhangjie/KaggleWhale/attention_90epochs_model_weights.h5'):
+        model.load_weights('/home/zhangjie/KaggleWhale/attention_90epochs_model_weights.h5', by_name=True, skip_mismatch=True, reshape=True)
         #model.set_weights(tmp.get_weights())
         #model.save_weights('ori_model_weights.h5')
     print('training')
@@ -556,7 +645,7 @@ if stage == 'train':
         # epoch -> 150
         #for _ in range(5): make_steps(5, 1.0)
         # epoch -> 200
-        set_lr(model, 1e-5)
+        set_lr(model, 5e-5)
         for _ in range(2):
             make_steps(5, 1.0)
         #     # epoch -> 240
@@ -579,7 +668,7 @@ if stage == 'train':
         #     # epoch -> 400
         #     set_lr(model, 1e-5)
         #     for _ in range(2): make_steps(5, 0.25)
-        model.save_weights('attention_90epochs_model_weights.h5')
+        model.save_weights('attention_100epochs_model_weights.h5')
 
 #if os.path.isfile('/home/zhangjie/KaggleWhale/attention_85epochs_model_weights.h5'):
 #    model.load_weights('/home/zhangjie/KaggleWhale/attention_85epochs_model_weights.h5', by_name=True, skip_mismatch=True)

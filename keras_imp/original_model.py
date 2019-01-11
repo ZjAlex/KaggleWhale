@@ -389,12 +389,46 @@ for w, hs in w2hs.items():
         w2hs[w] = sorted(hs)
 
 
-train = []  # A list of training image ids
-for hs in w2hs.values():
-    if len(hs) > 1:
-        train += hs
-random.shuffle(train)
+# train = []  # A list of training image ids
+# for hs in w2hs.values():
+#     if len(hs) > 1:
+#         train += hs
+# random.shuffle(train)
+# train_set = set(train)
+#
+# w2ts = {}  # Associate the image ids from train to each whale id.
+# for w, hs in w2hs.items():
+#     for h in hs:
+#         if h in train_set:
+#             if w not in w2ts:
+#                 w2ts[w] = []
+#             if h not in w2ts[w]:
+#                 w2ts[w].append(h)
+# for w, ts in w2ts.items():
+#     w2ts[w] = np.array(ts)
+#
+# t2i = {}  # The position in train of each training image id
+# for i, t in enumerate(train):
+#     t2i[t] = i
+#
+# all_data = []  # A list of training image ids
+# for hs in w2hs.values():
+#     if len(hs) > 1:
+#         all_data += hs
+# # random.shuffle(all_data)
+# # train_set = set(all_data)
+
+from sklearn.model_selection import train_test_split
+train, test = train_test_split(all_data, test_size=0.1, shuffle=False)
+
 train_set = set(train)
+test_set = set(test)
+
+random.shuffle(train)
+train = set(train)
+
+random.shuffle(test)
+test = set(test)
 
 w2ts = {}  # Associate the image ids from train to each whale id.
 for w, hs in w2hs.items():
@@ -407,9 +441,93 @@ for w, hs in w2hs.items():
 for w, ts in w2ts.items():
     w2ts[w] = np.array(ts)
 
+w2vs = {}  # Associate the image ids from train to each whale id.
+for w, hs in w2hs.items():
+    for h in hs:
+        if h in test_set:
+            if w not in w2vs:
+                w2vs[w] = []
+            if h not in w2vs[w]:
+                w2vs[w].append(h)
+for w, ts in w2vs.items():
+    w2vs[w] = np.array(ts)
+
 t2i = {}  # The position in train of each training image id
 for i, t in enumerate(train):
     t2i[t] = i
+
+v2i = {}
+for i, v in enumerate(test):
+    v2i[v] = i
+
+
+class TestingData(Sequence):
+    def __init__(self, batch_size=32):
+        """
+        @param score the cost matrix for the picture matching
+        @param steps the number of epoch we are planning with this score matrix
+        """
+        super(TestingData, self).__init__()
+        np.random.seed(10)
+        self.score = -1 * np.random.random_sample(size=(len(test), len(test)))
+        np.random.seed(None)
+        self.batch_size = batch_size
+        for vs in w2vs.values():
+            idxs = [v2i[v] for v in vs]
+            for i in idxs:
+                for j in idxs:
+                    self.score[
+                        i, j] = 10000.0  # Set a large value for matching whales -- eliminates this potential pairing
+        self.get_test_data()
+
+    def __getitem__(self, index):
+        start = self.batch_size * index
+        end = min(start + self.batch_size, len(self.match) + len(self.unmatch))
+        size = end - start
+        assert size > 0
+        a = np.zeros((size,) + img_shape, dtype=K.floatx())
+        b = np.zeros((size,) + img_shape, dtype=K.floatx())
+        c = np.zeros((size, 1), dtype=K.floatx())
+        j = start // 2
+        for i in range(0, size, 2):
+            a[i, :, :, :] = read_for_validation(self.match[j][0])
+            b[i, :, :, :] = read_for_validation(self.match[j][1])
+            c[i, 0] = 1  # This is a match
+            a[i + 1, :, :, :] = read_for_validation(self.unmatch[j][0])
+            b[i + 1, :, :, :] = read_for_validation(self.unmatch[j][1])
+            c[i + 1, 0] = 0  # Different whales
+            j += 1
+        return [a, b], c
+
+    def get_test_data(self):
+        self.match = []
+        self.unmatch = []
+        _, _, x = lapjv(self.score)  # Solve the linear assignment problem
+        y = np.arange(len(x), dtype=np.int32)
+
+        # Compute a derangement for matching whales
+        for vs in w2vs.values():
+            d = vs.copy()
+            while True:
+                random.shuffle(d)
+                if not np.any(vs == d): break
+            for ab in zip(vs, d): self.match.append(ab)
+
+        # Construct unmatched whale pairs from the LAP solution.
+        for i, j in zip(x, y):
+            if i == j:
+                print(self.score)
+                print(x)
+                print(y)
+                print(i, j)
+            assert i != j
+            self.unmatch.append((test[i], test[j]))
+
+        # print(len(self.match), len(train), len(self.unmatch), len(train))
+        assert len(self.match) == len(test) and len(self.unmatch) == len(test)
+
+    def __len__(self):
+        return (len(self.match) + len(self.unmatch) + self.batch_size - 1) // self.batch_size
 
 
 class TrainingData(Sequence):
@@ -618,7 +736,8 @@ def make_steps(step, ampl):
     # Train the model for 'step' epochs
     history = model.fit_generator(
         TrainingData(score + ampl * np.random.random_sample(size=score.shape), steps=step, batch_size=32),
-        initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6, verbose=1).history
+        initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
+        verbose=1, validation_data=TestingData()).history
     steps += step
 
     # Collect history data
@@ -644,7 +763,7 @@ if stage == 'train':
         #    print('noise ampl.  = ', ampl)
         #    make_steps(5, ampl)
         #    ampl = max(1.0, 100 ** -0.1 * ampl)
-        make_steps(10, 0.0)
+        make_steps(10, 1.0)
         model.save('orimodel_30epochs.model')
 
 if os.path.isfile('/home/zhangjie/KaggleWhale/orimodel_30epochs.model'):

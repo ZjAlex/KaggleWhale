@@ -540,8 +540,8 @@ histories = []
 steps = 0
 
 if stage == 'train':
-    if os.path.isfile('/home/zhangjie/KaggleWhale/attention_20epochs_model_weights.h5'):
-        model.load_weights('/home/zhangjie/KaggleWhale/attention_20epochs_model_weights.h5', by_name=True, skip_mismatch=True, reshape=True)
+    if os.path.isfile('/home/zhangjie/KaggleWhale/attention_70epochs_model_weights.h5'):
+        model.load_weights('/home/zhangjie/KaggleWhale/attention_70epochs_model_weights.h5', by_name=True, skip_mismatch=True, reshape=True)
         #model.set_weights(tmp.get_weights())
         #model.save_weights('ori_model_weights.h5')
     print('training')
@@ -554,10 +554,11 @@ if stage == 'train':
         #     make_steps(5, ampl)
         #     ampl = max(1.0, 100 ** -0.1 * ampl)
         # epoch -> 150
-        for _ in range(5): make_steps(5, 1.0)
+        #for _ in range(5): make_steps(5, 1.0)
         # epoch -> 200
-        set_lr(model, 16e-5)
-        for _ in range(5): make_steps(5, 0.5)
+        #set_lr(model, 16e-5)
+        for _ in range(2):
+            make_steps(5, 1.0)
         #     # epoch -> 240
         #     set_lr(model, 4e-5)
         #     for _ in range(8): make_steps(5, 0.25)
@@ -578,10 +579,10 @@ if stage == 'train':
         #     # epoch -> 400
         #     set_lr(model, 1e-5)
         #     for _ in range(2): make_steps(5, 0.25)
-        model.save_weights('attention_70epochs_model_weights.h5')
+        model.save_weights('attention_80epochs_model_weights.h5')
 
-if os.path.isfile('/home/zhangjie/KaggleWhale/attention_70epochs_model_weights.h5'):
-    model.load_weights('/home/zhangjie/KaggleWhale/attention_70epochs_model_weights.h5', by_name=True, skip_mismatch=True)
+if os.path.isfile('/home/zhangjie/KaggleWhale/attention_80epochs_model_weights.h5'):
+    model.load_weights('/home/zhangjie/KaggleWhale/attention_80epochs_model_weights.h5', by_name=True, skip_mismatch=True)
     #model.set_weights(tmp.get_weights())
 
 

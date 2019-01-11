@@ -423,10 +423,8 @@ train_set = set(train)
 test_set = set(test)
 
 random.shuffle(train)
-train = set(train)
-
 random.shuffle(test)
-test = set(test)
+
 
 w2ts = {}  # Associate the image ids from train to each whale id.
 for w, hs in w2hs.items():

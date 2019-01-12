@@ -22,7 +22,7 @@ P2H = '/home/zhangjie/KWhaleData/metadata/p2h.pickle'
 P2SIZE = '/home/zhangjie/KWhaleData/metadata/p2size.pickle'
 BB_DF = '/home/zhangjie/KWhaleData/metadata/bounding_boxes.csv'
 
-img_shape = (384, 384, 3)  # The image shape used by the model
+img_shape = (384, 384, 1)  # The image shape used by the model
 anisotropy = 2.15  # The horizontal compression ratio
 crop_margin = 0.05  # The margin added around the bounding box to compensate for bounding box inaccuracy
 
@@ -89,9 +89,6 @@ def read_raw_image(p):
     return img
 
 
-
-
-
 def letterbox_image(image, size):
     '''resize image with unchanged aspect ratio using padding'''
     iw, ih = image.size
@@ -101,13 +98,13 @@ def letterbox_image(image, size):
     nh = int(ih*scale)
 
     image = image.resize((nw,nh), pil_image.BICUBIC)
-    new_image = pil_image.new('RGB', size, (128, 128, 128))
+    new_image = pil_image.new('L', size)#, (128, 128, 128))
     new_image.paste(image, ((w-nw)//2, (h-nh)//2))
     return new_image
 
 
 # 保持比例，采用keras数据增强方式
-def read_cropped_image_v1(p, p2size, p2bb, augment):
+def read_cropped_image(p, p2size, p2bb, augment):
     size_x, size_y = p2size[p]
 
     # Determine the region of the original image we want to capture based on the bounding box.
@@ -128,7 +125,7 @@ def read_cropped_image_v1(p, p2size, p2bb, augment):
     if y1 > size_y:
         y1 = size_y
 
-    img = read_raw_image(p).convert('RGB')
+    img = read_raw_image(p).convert('L')
 
     bbox = (x0, y0, x1, y1)
     img = img.crop(bbox)
@@ -151,90 +148,6 @@ def read_cropped_image_v1(p, p2size, p2bb, augment):
         apply_affine_transform(img, theta, tx, ty, shear, zx, zy)
 
     img = (img - 127.5) / 128.0
-    return img
-
-
-def build_transform(rotation, shear, height_zoom, width_zoom, height_shift, width_shift):
-    """
-    Build a transformation matrix with the specified characteristics.
-    """
-    rotation = np.deg2rad(rotation)
-    shear = np.deg2rad(shear)
-    rotation_matrix = np.array(
-        [[np.cos(rotation), np.sin(rotation), 0], [-np.sin(rotation), np.cos(rotation), 0], [0, 0, 1]])
-    shift_matrix = np.array([[1, 0, height_shift], [0, 1, width_shift], [0, 0, 1]])
-    shear_matrix = np.array([[1, np.sin(shear), 0], [0, np.cos(shear), 0], [0, 0, 1]])
-    zoom_matrix = np.array([[1.0 / height_zoom, 0, 0], [0, 1.0 / width_zoom, 0], [0, 0, 1]])
-    shift_matrix = np.array([[1, 0, -height_shift], [0, 1, -width_shift], [0, 0, 1]])
-    return np.dot(np.dot(rotation_matrix, shear_matrix), np.dot(zoom_matrix, shift_matrix))
-
-
-def read_cropped_image(p, p2size, p2bb, augment):
-    """
-    @param p : the name of the picture to read
-    @param augment: True/False if data augmentation should be performed
-    @return a numpy array with the transformed image
-    """
-    size_x, size_y = p2size[p]
-
-    # Determine the region of the original image we want to capture based on the bounding box.
-    x0, y0, x1, y1 = p2bb.loc[p]
-    # if rotation is required,
-    # if p in rotate: x0, y0, x1, y1 = size_x - x1, size_y - y1, size_x - x0, size_y - y0
-
-    dx = x1 - x0
-    dy = y1 - y0
-    x0 -= dx * crop_margin
-    x1 += dx * crop_margin + 1
-    y0 -= dy * crop_margin
-    y1 += dy * crop_margin + 1
-    if (x0 < 0): x0 = 0
-    if (x1 > size_x): x1 = size_x
-    if (y0 < 0): y0 = 0
-    if (y1 > size_y): y1 = size_y
-    dx = x1 - x0
-    dy = y1 - y0
-    if dx > dy * anisotropy:
-        dy = 0.5 * (dx / anisotropy - dy)
-        y0 -= dy
-        y1 += dy
-    else:
-        dx = 0.5 * (dy * anisotropy - dx)
-        x0 -= dx
-        x1 += dx
-
-    # Generate the transformation matrix
-    trans = np.array([[1, 0, -0.5 * img_shape[0]], [0, 1, -0.5 * img_shape[1]], [0, 0, 1]])
-    trans = np.dot(np.array([[(y1 - y0) / img_shape[0], 0, 0], [0, (x1 - x0) / img_shape[1], 0], [0, 0, 1]]), trans)
-
-    if augment:
-        trans = np.dot(build_transform(
-            random.uniform(-5, 5),
-            random.uniform(-5, 5),
-            random.uniform(0.8, 1.0),
-            random.uniform(0.8, 1.0),
-            random.uniform(-0.05 * (y1 - y0), 0.05 * (y1 - y0)),
-            random.uniform(-0.05 * (x1 - x0), 0.05 * (x1 - x0))
-        ), trans)
-    trans = np.dot(np.array([[1, 0, 0.5 * (y1 + y0)], [0, 1, 0.5 * (x1 + x0)], [0, 0, 1]]), trans)
-
-    # Read the image, Comvert to numpy array
-    img = read_raw_image(p)
-    img = img_to_array(img)
-
-    # Apply affine transformation
-    matrix = trans[:2, :2]
-    offset = trans[:2, 2]
-    x = np.moveaxis(img, -1, 0)  # Change to channel first
-
-    img = [affine_transform(img, matrix, offset, order=1, output_shape=img_shape[:-1], mode='constant',
-                            cval=np.average(img)) for img in x]
-    img = np.moveaxis(np.stack(img, axis=0), 0, -1)
-
-    # Normalize to zero mean and unit variance
-    img -= np.mean(img, keepdims=True)
-    img /= np.std(img, keepdims=True) + K.epsilon()
-
     return img
 
 

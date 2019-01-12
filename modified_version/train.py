@@ -18,7 +18,7 @@ parser.add_argument('--reg', type=float, help='regularization rate', default=0.0
 parser.add_argument('--noise', type=float, help='random noise to decide the difficult level of the trainning pairs', default=1.0)
 args = parser.parse_args(sys.argv[1:])
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '2'
 
 tagged, submit, join = get_alldata()
 

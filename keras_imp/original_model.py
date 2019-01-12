@@ -646,7 +646,7 @@ def val_score(threshold, known, h2kts, score_val):
 
 
 class cv_callback(Callback):
-    def on_epoch_end(self):
+    def on_epoch_end(self, epoch, logs=None):
         h2kts = {}
         for p, w in tagged.items():
             if w != new_whale:  # Use only identified whales

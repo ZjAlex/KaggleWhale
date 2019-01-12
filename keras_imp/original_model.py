@@ -528,7 +528,9 @@ class FeatureGen(Sequence):
         start = self.batch_size * index
         size = min(len(self.data) - start, self.batch_size)
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
+        start0 = time.time()
         for i in range(size): a[i, :, :, :] = read_for_validation(self.data[start + i])
+        print('time: ' + str(time.time() - start0))
         if self.verbose > 0:
             self.progress.update()
             if self.progress.n >= len(self): self.progress.close()

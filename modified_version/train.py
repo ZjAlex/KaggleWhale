@@ -128,6 +128,7 @@ class TrainingData(Sequence):
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
         j = start // 2
+        start0 = time.time()
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_training(self.match[j][0], p2size, p2bb)
             b[i, :, :, :] = read_for_training(self.match[j][1], p2size, p2bb)
@@ -136,6 +137,7 @@ class TrainingData(Sequence):
             b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1], p2size, p2bb)
             c[i + 1, 0] = 0  # Different whales
             j += 1
+        print("time: " + str(time.time() - start0))
         return [a, b], c
 
     def on_epoch_end(self):

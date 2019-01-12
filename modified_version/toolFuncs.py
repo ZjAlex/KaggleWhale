@@ -22,7 +22,7 @@ P2H = '/home/zhangjie/KWhaleData/metadata/p2h.pickle'
 P2SIZE = '/home/zhangjie/KWhaleData/metadata/p2size.pickle'
 BB_DF = '/home/zhangjie/KWhaleData/metadata/bounding_boxes.csv'
 
-img_shape = (384, 384, 1)  # The image shape used by the model
+img_shape = (384, 384, 3)  # The image shape used by the model
 anisotropy = 2.15  # The horizontal compression ratio
 crop_margin = 0.05  # The margin added around the bounding box to compensate for bounding box inaccuracy
 
@@ -113,7 +113,7 @@ def letterbox_image(image, size):
     nh = int(ih*scale)
 
     image = image.resize((nw,nh), pil_image.BICUBIC)
-    new_image = pil_image.new('RGB', size, (128,128,128))
+    new_image = pil_image.new('RGB', size, (128, 128, 128))
     new_image.paste(image, ((w-nw)//2, (h-nh)//2))
     return new_image
 
@@ -140,12 +140,11 @@ def read_cropped_image(p, p2size, p2bb, augment):
     if y1 > size_y:
         y1 = size_y
 
-    img = read_raw_image(p).convert('L')
+    img = read_raw_image(p).convert('RGB')
 
     bbox = (x0, y0, x1, y1)
     img = img.crop(bbox)
-    img = img.resize((383, 384), pil_image.BICUBIC)
-    #img = letterbox_image(img, img_shape[:2])
+    img = letterbox_image(img, img_shape[:2])
     img = np.array(img).reshape(img_shape)
     img = img.astype(np.float32)
     if augment:

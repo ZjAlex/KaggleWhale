@@ -231,7 +231,7 @@ def score_reshape(score, x, y=None):
     return m
 
 
-def val_score(test, threshold, known, h2kts, score_val):
+def val_score(test, threshold, known, p2ws, score_val):
     new_whale = 'new_whale'
     vtop = 0
     vhigh = 0
@@ -242,14 +242,14 @@ def val_score(test, threshold, known, h2kts, score_val):
         s = set()
         a = score_val[i, :]
         for j in list(reversed(np.argsort(a))):
-            h = known[j]
+            p = known[j]
             if a[j] < threshold and new_whale not in s:
                 pos[len(t)] += 1
                 s.add(new_whale)
                 t.append(new_whale)
                 if len(t) == 5:
                     break
-            for w in h2kts[h]:
+            for w in p2ws[p]:
                 assert w != new_whale
                 if w not in s:
                     if a[j] > 1.0:

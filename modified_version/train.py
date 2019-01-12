@@ -9,8 +9,8 @@ from toolFuncs import *
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('--input_path', type=int, help='how many epochs you have trained decide the input model path')
-parser.add_argument('--output_path', type=int, help='how many epochs you will train')
+parser.add_argument('--input_path', type=str, help='input path')
+parser.add_argument('--output_path', type=str, help='output path')
 parser.add_argument('--stage', type=str, help='train or test----default: train', default='train')
 parser.add_argument('--threshold', type=float, help='threshold to decide the new whale to insert---default: 0.99', default=0.99)
 parser.add_argument('--lr', type=float, help='learning rate----default: 1e-5', default=1e-5)
@@ -324,15 +324,15 @@ histories = []
 steps = 0
 
 if True:
-    if os.path.isfile('/home/zhangjie/KaggleWhale/attention_'+str(args.input_path)+'epochs_model_weights.h5'):
-        model.load_weights('/home/zhangjie/KaggleWhale/attention_'+str(args.input_path)+'epochs_model_weights.h5',
+    if os.path.isfile('/home/zhangjie/KaggleWhale/attention_'+args.input_path+'_model_weights.h5'):
+        model.load_weights('/home/zhangjie/KaggleWhale/attention_'+args.input_path+'_model_weights.h5',
                            by_name=True, skip_mismatch=True, reshape=True)
     print('training')
     if args.stage == 'train':
         set_lr(model, args.lr)
         for _ in range(args.epochs):
             make_steps(args.steps, args.noise)
-        model.save_weights('attention_'+str(args.output_path)+'epochs_model_weights.h5')
+        model.save_weights('attention_'+args.output_path+'_model_weights.h5')
 
 
 def prepare_submission(threshold, filename):

@@ -117,5 +117,3 @@ def build_model(lr, l2, img_shape=(384, 384, 1),activation='sigmoid'):
     model.compile(optim, loss='binary_crossentropy', metrics=['binary_crossentropy', 'acc'])
     return model, branch_model, head_model
 
-model, branch_model, head_model = build_model(1,1)
-branch_model.summary()

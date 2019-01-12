@@ -133,12 +133,6 @@ def read_cropped_image(p, p2size, p2bb, augment):
     img = np.array(img).reshape(img_shape)
     img = img.astype(np.float32)
     if augment:
-        # img = random_rotation(img, 10, row_axis=0, col_axis=1, channel_axis=2)
-        # img = random_shift(img, 0.05, 0.1, row_axis=0, col_axis=1, channel_axis=2)
-        # img = random_zoom(img, (0.9, 1.1), row_axis=0, col_axis=1, channel_axis=2)
-        # img = random_shear(img, 10, row_axis=0, col_axis=1, channel_axis=2)
-        # img = random_brightness(img, (0.8, 1.2))
-
         theta = np.random.uniform(-10, 10)  # random rotation
         h, w = img.shape[0], img.shape[1]
         tx = np.random.uniform(-0.1, 0.1) * h

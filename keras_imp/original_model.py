@@ -645,8 +645,8 @@ def val_score(threshold, known, h2kts, score_val):
     return predictions
 
 
-def cv_callback(Callback):
-    def on_epoch_end():
+class cv_callback(Callback):
+    def on_epoch_end(self):
         h2kts = {}
         for p, w in tagged.items():
             if w != new_whale:  # Use only identified whales
@@ -733,7 +733,7 @@ def make_steps(step, ampl):
     history = model.fit_generator(
         TrainingData(score + ampl * np.random.random_sample(size=score.shape), steps=step, batch_size=32),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
-        verbose=1, validation_data=TestingData(), callbacks=[cv_callback]).history
+        verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
     steps += step
 
     # Collect history data

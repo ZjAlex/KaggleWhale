@@ -11,6 +11,7 @@ from keras.utils import Sequence
 from pandas import read_csv
 from scipy.ndimage import affine_transform
 from tqdm import tqdm
+from keras.preprocessing.image import random_shift, random_rotation, random_zoom, random_shear, random_brightness
 
 
 TRAIN_DF = '/home/zhangjie/KWhaleData/train.csv'
@@ -21,7 +22,7 @@ P2H = '/home/zhangjie/KWhaleData/metadata/p2h.pickle'
 P2SIZE = '/home/zhangjie/KWhaleData/metadata/p2size.pickle'
 BB_DF = '/home/zhangjie/KWhaleData/metadata/bounding_boxes.csv'
 
-img_shape = (384, 384, 1)  # The image shape used by the model
+img_shape = (384, 384, 3)  # The image shape used by the model
 anisotropy = 2.15  # The horizontal compression ratio
 crop_margin = 0.05  # The margin added around the bounding box to compensate for bounding box inaccuracy
 
@@ -103,12 +104,22 @@ def build_transform(rotation, shear, height_zoom, width_zoom, height_shift, widt
     return np.dot(np.dot(rotation_matrix, shear_matrix), np.dot(zoom_matrix, shift_matrix))
 
 
+def letterbox_image(image, size):
+    '''resize image with unchanged aspect ratio using padding'''
+    iw, ih = image.size
+    w, h = size
+    scale = min(w/iw, h/ih)
+    nw = int(iw*scale)
+    nh = int(ih*scale)
+
+    image = image.resize((nw,nh), pil_image.BICUBIC)
+    new_image = pil_image.new('RGB', size, (128,128,128))
+    new_image.paste(image, ((w-nw)//2, (h-nh)//2))
+    return new_image
+
+
+# 保持比例，采用keras数据增强方式
 def read_cropped_image(p, p2size, p2bb, augment):
-    """
-    @param p : the name of the picture to read
-    @param augment: True/False if data augmentation should be performed
-    @return a numpy array with the transformed image
-    """
     size_x, size_y = p2size[p]
 
     # Determine the region of the original image we want to capture based on the bounding box.
@@ -128,46 +139,22 @@ def read_cropped_image(p, p2size, p2bb, augment):
         y0 = 0
     if y1 > size_y:
         y1 = size_y
-    dx = x1 - x0
-    dy = y1 - y0
-    if dx > dy * anisotropy:
-        dy = 0.5 * (dx / anisotropy - dy)
-        y0 -= dy
-        y1 += dy
-    else:
-        dx = 0.5 * (dy * anisotropy - dx)
-        x0 -= dx
-        x1 += dx
 
-    # Generate the transformation matrix
-    trans = np.array([[1, 0, -0.5 * img_shape[0]], [0, 1, -0.5 * img_shape[1]], [0, 0, 1]])
-    trans = np.dot(np.array([[(y1 - y0) / img_shape[0], 0, 0], [0, (x1 - x0) / img_shape[1], 0], [0, 0, 1]]), trans)
+    img = read_raw_image(p).convert('RGB')
+
+    bbox = (x0, y0, x1, y1)
+    img = img.crop(bbox)
+
+    img = letterbox_image(img, img_shape[:2])
+    img = np.array(img).reshape(img_shape)
+    img = img.astype(np.float32)
     if augment:
-        trans = np.dot(build_transform(
-            random.uniform(-5, 5),
-            random.uniform(-5, 5),
-            random.uniform(0.8, 1.0),
-            random.uniform(0.8, 1.0),
-            random.uniform(-0.05 * (y1 - y0), 0.05 * (y1 - y0)),
-            random.uniform(-0.05 * (x1 - x0), 0.05 * (x1 - x0))
-        ), trans)
-    trans = np.dot(np.array([[1, 0, 0.5 * (y1 + y0)], [0, 1, 0.5 * (x1 + x0)], [0, 0, 1]]), trans)
-
-    # Read the image, transform to black and white and comvert to numpy array
-    img = read_raw_image(p).convert('L')
-    img = img_to_array(img)
-
-    # Apply affine transformation
-    matrix = trans[:2, :2]
-    offset = trans[:2, 2]
-    img = img.reshape(img.shape[:-1])
-    img = affine_transform(img, matrix, offset, output_shape=img_shape[:-1], order=1, mode='constant',
-                           cval=np.average(img))
-    img = img.reshape(img_shape)
-
-    # Normalize to zero mean and unit variance
-    img -= np.mean(img, keepdims=True)
-    img /= np.std(img, keepdims=True) + K.epsilon()
+        img = random_rotation(img, 10, row_axis=0, col_axis=1, channel_axis=2)
+        img = random_shift(img, 0.05, 0.1, row_axis=0, col_axis=1, channel_axis=2)
+        img = random_zoom(img, (0.9, 1.1), row_axis=0, col_axis=1, channel_axis=2)
+        img = random_shear(img, 10, row_axis=0, col_axis=1, channel_axis=2)
+        img = random_brightness(img, (0.8, 1.2))
+    img = (img - 127.5) / 128.0
     return img
 
 
@@ -248,13 +235,6 @@ def get_lr(model):
 
 
 def score_reshape(score, x, y=None):
-    """
-    Tranformed the packed matrix 'score' into a square matrix.
-    @param score the packed matrix
-    @param x the first image feature tensor
-    @param y the second image feature tensor if different from x
-    @result the square matrix
-    """
     if y is None:
         # When y is None, score is a packed upper triangular matrix.
         # Unpack, and transpose to form the symmetrical lower triangular matrix.

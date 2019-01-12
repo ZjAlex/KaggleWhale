@@ -3,6 +3,8 @@ import os
 import sys
 from keras.callbacks import Callback
 from attention_model import build_model
+from keras.utils import Sequence
+from lap import lapjv
 from toolFuncs import *
 
 import argparse
@@ -34,6 +36,20 @@ train, test, train_set, test_set, w2ts, w2vs, t2i, v2i = split_train_test(w2ps)
 
 model, branch_model, head_model = build_model(args.lr, args.reg)
 new_whale = 'new_whale'
+
+p2wts = {}
+for p, w in tagged.items():
+    if w != new_whale:  # Use only identified whales
+        if p in train_set:
+            if p not in p2wts:
+                p2wts[p] = []
+            if w not in p2wts[p]:
+                p2wts[p].append(w)
+known = sorted(list(p2wts.keys()))
+
+# Dictionary of picture indices
+kt2i = {}
+for i, p in enumerate(known): kt2i[p] = i
 
 
 class TestingData(Sequence):
@@ -248,20 +264,6 @@ def compute_score(verbose=1):
 
 class cv_callback(Callback):
     def on_epoch_end(self, epoch, logs=None):
-        p2wts = {}
-        new_whale = 'new_whale'
-        for p, w in tagged.items():
-            if w != new_whale:  # Use only identified whales
-                if p in train_set:
-                    if p not in p2wts:
-                        p2wts[p] = []
-                    if w not in p2wts[p]:
-                        p2wts[p].append(w)
-        known = sorted(list(p2wts.keys()))
-
-        # Dictionary of picture indices
-        kt2i = {}
-        for i, p in enumerate(known): kt2i[p] = i
 
         # Evaluate the model.
         print("计算fknown")
@@ -285,41 +287,6 @@ def make_steps(step, ampl):
     @param ampl the K, the randomized component of the score matrix.
     """
     global w2ts, t2i, steps, features, score, histories
-
-    # shuffle the training pictures
-    random.shuffle(train)
-
-    # Map whale id to the list of associated training picture hash value
-    w2ts = {}  # Associate the image ids from train to each whale id.
-    for w, ps in w2ps.items():
-        for p in ps:
-            if p in train_set:
-                if w not in w2ts:
-                    w2ts[w] = []
-                if p not in w2ts[w]:
-                    w2ts[w].append(p)
-    for w, ts in w2ts.items():
-        w2ts[w] = np.array(ts)
-
-    # Map training picture hash value to index in 'train' array
-    t2i = {}  # The position in train of each training image id
-    for i, t in enumerate(train):
-        t2i[t] = i
-
-    p2wts = {}
-    new_whale = 'new_whale'
-    for p, w in tagged.items():
-        if w != new_whale:  # Use only identified whales
-            if p in train_set:
-                if p not in p2wts:
-                    p2wts[p] = []
-                if w not in p2wts[p]:
-                    p2wts[p].append(w)
-    known = sorted(list(p2wts.keys()))
-
-    # Dictionary of picture indices
-    kt2i = {}
-    for i, p in enumerate(known): kt2i[p] = i
 
     # Evaluate the model.
     print("计算fknown")
@@ -407,21 +374,7 @@ def prepare_submission(threshold, filename):
     return vtop, vhigh, pos
 
 
-# Find elements from training sets not 'new_whale'
 tic = time.time()
-p2ws = {}
-for p, w in tagged.items():
-    if w != new_whale:  # Use only identified whales
-        if p not in p2ws:
-            p2ws[p] = []
-        if w not in p2ws[p]:
-            p2ws[p].append(w)
-known = sorted(list(p2ws.keys()))
-
-# Dictionary of picture indices
-p2i = {}
-for i, p in enumerate(known):
-    p2i[p] = i
 
 # Evaluate the model.
 fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)

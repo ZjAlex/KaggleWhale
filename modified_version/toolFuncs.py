@@ -1,15 +1,11 @@
 import pickle
 import random
-from lap import lapjv
 from os.path import isfile
 import numpy as np
 import pandas as pd
 from PIL import Image as pil_image
 from keras import backend as K
-from keras.preprocessing.image import img_to_array
-from keras.utils import Sequence
 from pandas import read_csv
-from scipy.ndimage import affine_transform
 from tqdm import tqdm
 from keras.preprocessing.image import apply_affine_transform
 
@@ -18,7 +14,6 @@ TRAIN_DF = '/home/zhangjie/KWhaleData/train.csv'
 SUB_Df = '/home/zhangjie/KWhaleData/sample_submission.csv'
 TRAIN = '/home/zhangjie/KWhaleData/train/'
 TEST = '/home/zhangjie/KWhaleData/test/'
-P2H = '/home/zhangjie/KWhaleData/metadata/p2h.pickle'
 P2SIZE = '/home/zhangjie/KWhaleData/metadata/p2size.pickle'
 BB_DF = '/home/zhangjie/KWhaleData/metadata/bounding_boxes.csv'
 
@@ -96,8 +91,8 @@ def letterbox_image(image, size):
     nw = int(iw*scale)
     nh = int(ih*scale)
 
-    image = image.resize((nw,nh), pil_image.BICUBIC)
-    new_image = pil_image.new('L', size)#, (128, 128, 128))
+    image = image.resize((nw, nh), pil_image.BICUBIC)
+    new_image = pil_image.new('L', size)  # , (128, 128, 128))
     new_image.paste(image, ((w-nw)//2, (h-nh)//2))
     return new_image
 

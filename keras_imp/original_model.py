@@ -733,13 +733,17 @@ def make_steps(step, ampl):
     known = sorted(list(h2kts.keys()))
 
     # Dictionary of picture indices
-    h2i = {}
-    for i, h in enumerate(known): h2i[h] = i
+    kt2i = {}
+    for i, h in enumerate(known): kt2i[h] = i
 
     # Evaluate the model.
+    print("计算fknown")
     fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
+    print("计算fsubmit")
     fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
+    print("计算score")
     score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+    print("计算结束")
     score = score_reshape(score, fknown, fsubmit)
     predictions = val_score(0.95)
     labels = [tagged[h2p[h_]] for h_ in test]

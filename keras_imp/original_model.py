@@ -308,7 +308,7 @@ for w, hs in w2hs.items():
     if len(hs) > 1:
         w2hs[w] = sorted(hs)
 
-
+np.random.seed(44)
 train = []
 test = []
 for hs in w2hs.values():
@@ -318,13 +318,12 @@ for hs in w2hs.values():
         train += hs[:-3]
     elif len(hs) > 1:
         train += hs
-
+np.random.seed(None)
 
 train_set = set(train)
 test_set = set(test)
 
 random.shuffle(train)
-random.shuffle(test)
 
 
 w2ts = {}  # Associate the image ids from train to each whale id.
@@ -691,7 +690,7 @@ def make_steps(step, ampl):
     print("计算结束")
     score = score_reshape(score, fknown, fsubmit)
     predictions = val_score(0.99, known, h2kts)
-    labels = [tagged[h2p[h_]] for h_ in test]
+    labels = [tagged[h2ps[h_][0]] for h_ in test]
 
     print('cv score: ' + str(map_per_set(labels, predictions)))
 

@@ -32,6 +32,8 @@ import time
 import os
 import sys
 from Model import build_model
+from keras.callbacks import Callback
+
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -610,7 +612,7 @@ def compute_score(verbose=1):
     return features, score
 
 
-def val_score(threshold, known, h2kts):
+def val_score(threshold, known, h2kts, score_val):
     vtop = 0
     vhigh = 0
     pos = [0, 0, 0, 0, 0, 0]
@@ -618,7 +620,7 @@ def val_score(threshold, known, h2kts):
     for i, p in enumerate(tqdm(test)):
         t = []
         s = set()
-        a = score[i, :]
+        a = score_val[i, :]
         for j in list(reversed(np.argsort(a))):
             h = known[j]
             if a[j] < threshold and new_whale not in s:
@@ -641,6 +643,36 @@ def val_score(threshold, known, h2kts):
         assert len(t) == 5 and len(s) == 5
         predictions.append(t[:5])
     return predictions
+
+
+def cv_callback(Callback):
+    def on_epoch_end():
+        h2kts = {}
+        for p, w in tagged.items():
+            if w != new_whale:  # Use only identified whales
+                h = p2h[p]
+                if h in train_set:
+                    if h not in h2kts: h2kts[h] = []
+                    if w not in h2kts[h]: h2kts[h].append(w)
+        known = sorted(list(h2kts.keys()))
+
+        # Dictionary of picture indices
+        kt2i = {}
+        for i, h in enumerate(known): kt2i[h] = i
+
+        # Evaluate the model.
+        print("计算fknown")
+        fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
+        print("计算fsubmit")
+        fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
+        print("计算score")
+        score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+        print("计算结束")
+        score_val = score_reshape(score_val, fknown, fsubmit)
+        predictions = val_score(0.99, known, h2kts, score_val)
+        labels = [tagged[h2ps[h_][0]] for h_ in test]
+
+        print('cv score: ' + str(map_per_set(labels, predictions)))
 
 
 def make_steps(step, ampl):
@@ -686,10 +718,10 @@ def make_steps(step, ampl):
     print("计算fsubmit")
     fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
     print("计算score")
-    score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+    score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
     print("计算结束")
-    score = score_reshape(score, fknown, fsubmit)
-    predictions = val_score(0.99, known, h2kts)
+    score_val = score_reshape(score_val, fknown, fsubmit)
+    predictions = val_score(0.99, known, h2kts,score_val)
     labels = [tagged[h2ps[h_][0]] for h_ in test]
 
     print('cv score: ' + str(map_per_set(labels, predictions)))
@@ -701,7 +733,7 @@ def make_steps(step, ampl):
     history = model.fit_generator(
         TrainingData(score + ampl * np.random.random_sample(size=score.shape), steps=step, batch_size=32),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
-        verbose=1, validation_data=TestingData()).history
+        verbose=1, validation_data=TestingData(), callbacks=[cv_callback]).history
     steps += step
 
     # Collect history data

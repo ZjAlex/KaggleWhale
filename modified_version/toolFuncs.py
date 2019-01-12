@@ -113,7 +113,7 @@ def letterbox_image(image, size):
     nh = int(ih*scale)
 
     image = image.resize((nw,nh), pil_image.BICUBIC)
-    new_image = pil_image.new('RGB', size, (128,128,128))
+    new_image = pil_image.new('L', size, (128,128,128))
     new_image.paste(image, ((w-nw)//2, (h-nh)//2))
     return new_image
 
@@ -140,7 +140,7 @@ def read_cropped_image(p, p2size, p2bb, augment):
     if y1 > size_y:
         y1 = size_y
 
-    img = read_raw_image(p).convert('RGB')
+    img = read_raw_image(p).convert('L')
 
     bbox = (x0, y0, x1, y1)
     img = img.crop(bbox)

@@ -11,7 +11,7 @@ from keras.utils import Sequence
 from pandas import read_csv
 from scipy.ndimage import affine_transform
 from tqdm import tqdm
-from keras.preprocessing.image import random_shift, random_rotation, random_zoom, random_shear, random_brightness,apply_affine_transform
+from keras.preprocessing.image import apply_affine_transform
 
 
 TRAIN_DF = '/home/zhangjie/KWhaleData/train.csv'
@@ -22,8 +22,7 @@ P2H = '/home/zhangjie/KWhaleData/metadata/p2h.pickle'
 P2SIZE = '/home/zhangjie/KWhaleData/metadata/p2size.pickle'
 BB_DF = '/home/zhangjie/KWhaleData/metadata/bounding_boxes.csv'
 
-img_shape = (384, 384, 1)  # The image shape used by the model
-anisotropy = 2.15  # The horizontal compression ratio
+img_shape = (224, 224, 1)  # The image shape used by the model
 crop_margin = 0.05  # The margin added around the bounding box to compensate for bounding box inaccuracy
 
 
@@ -139,7 +138,7 @@ def read_cropped_image(p, p2size, p2bb, augment):
         ty = np.random.uniform(-0.05, 0.05) * w  # random shift
         zx, zy = np.random.uniform(0.9, 1.1, 2)  # random zoom
         shear = np.random.uniform(-10, 10)  # random shear
-        apply_affine_transform(img, theta, tx, ty, shear, zx, zy)
+        img = apply_affine_transform(img, theta, tx, ty, shear, zx, zy)
 
     img = (img - 127.5) / 128.0
     return img

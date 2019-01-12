@@ -309,13 +309,16 @@ for w, hs in w2hs.items():
         w2hs[w] = sorted(hs)
 
 
-all_data = []  # A list of training image ids
+train = []
+test = []
 for hs in w2hs.values():
-    if len(hs) > 1:
-        all_data += hs
+    if len(hs) >= 8:
+        np.random.shuffle(hs)
+        test += hs[-3:]
+        train += hs[:-3]
+    elif len(hs) > 1:
+        train += hs
 
-from sklearn.model_selection import train_test_split
-train, test = train_test_split(all_data, test_size=0.1, shuffle=False)
 
 train_set = set(train)
 test_set = set(test)
@@ -353,6 +356,7 @@ for i, t in enumerate(train):
 v2i = {}
 for i, v in enumerate(test):
     v2i[v] = i
+
 
 
 class TestingData(Sequence):
@@ -418,6 +422,17 @@ class TestingData(Sequence):
 
     def __len__(self):
         return (len(self.match) + len(self.unmatch) + self.batch_size - 1) // self.batch_size
+
+
+def map_per_image(label, predictions):
+    try:
+        return 1.0 / (predictions[:5].index(label) + 1)
+    except ValueError:
+        return 0.0
+
+
+def map_per_set(labels, predictions):
+    return np.mean([map_per_image(l, p) for l, p in zip(labels, predictions)])
 
 
 class TrainingData(Sequence):
@@ -596,6 +611,39 @@ def compute_score(verbose=1):
     return features, score
 
 
+def val_score(threshold, known, h2kts):
+    vtop = 0
+    vhigh = 0
+    pos = [0, 0, 0, 0, 0, 0]
+    predictions = []
+    for i, p in enumerate(tqdm(test)):
+        t = []
+        s = set()
+        a = score[i, :]
+        for j in list(reversed(np.argsort(a))):
+            h = known[j]
+            if a[j] < threshold and new_whale not in s:
+                pos[len(t)] += 1
+                s.add(new_whale)
+                t.append(new_whale)
+                if len(t) == 5: break;
+            for w in h2kts[h]:
+                assert w != new_whale
+                if w not in s:
+                    if a[j] > 1.0:
+                        vtop += 1
+                    elif a[j] >= threshold:
+                        vhigh += 1
+                    s.add(w)
+                    t.append(w)
+                    if len(t) == 5: break;
+            if len(t) == 5: break;
+        if new_whale not in s: pos[5] += 1
+        assert len(t) == 5 and len(s) == 5
+        predictions.append(t[:5])
+    return predictions
+
+
 def make_steps(step, ampl):
     """
     Perform training epochs
@@ -619,6 +667,33 @@ def make_steps(step, ampl):
     # Map training picture hash value to index in 'train' array
     t2i = {}
     for i, t in enumerate(train): t2i[t] = i
+
+    h2kts = {}
+    for p, w in tagged.items():
+        if w != new_whale:  # Use only identified whales
+            h = p2h[p]
+            if h in train_set:
+                if h not in h2kts: h2kts[h] = []
+                if w not in h2kts[h]: h2kts[h].append(w)
+    known = sorted(list(h2kts.keys()))
+
+    # Dictionary of picture indices
+    kt2i = {}
+    for i, h in enumerate(known): kt2i[h] = i
+
+    # Evaluate the model.
+    print("计算fknown")
+    fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
+    print("计算fsubmit")
+    fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
+    print("计算score")
+    score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+    print("计算结束")
+    score = score_reshape(score, fknown, fsubmit)
+    predictions = val_score(0.99, known, h2kts)
+    labels = [tagged[h2p[h_]] for h_ in test]
+
+    print('cv score: ' + str(map_per_set(labels, predictions)))
 
     # Compute the match score for each picture pair
     features, score = compute_score()

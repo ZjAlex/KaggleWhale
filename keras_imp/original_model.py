@@ -392,6 +392,7 @@ train = []
 test = []
 for hs in w2hs.values():
     if len(hs) >= 8:
+        np.random.shuffle(hs)
         test += hs[-3:]
         train += hs[:-3]
     elif len(hs) > 1:
@@ -744,9 +745,6 @@ def make_steps(step, ampl):
     t2i = {}
     for i, t in enumerate(train): t2i[t] = i
 
-    # Compute the match score for each picture pair
-    features, score = compute_score()
-
     h2kts = {}
     for p, w in tagged.items():
         if w != new_whale:  # Use only identified whales
@@ -769,10 +767,14 @@ def make_steps(step, ampl):
     score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
     print("计算结束")
     score = score_reshape(score, fknown, fsubmit)
-    predictions = val_score(0.95, known, h2kts)
+    predictions = val_score(0.99, known, h2kts)
     labels = [tagged[h2p[h_]] for h_ in test]
 
     print('cv score: ' + str(map_per_set(labels, predictions)))
+
+    # Compute the match score for each picture pair
+    features, score = compute_score()
+
 
     # Train the model for 'step' epochs
     history = model.fit_generator(

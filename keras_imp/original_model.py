@@ -715,14 +715,6 @@ def make_steps(step, ampl):
     # Compute the match score for each picture pair
     features, score = compute_score()
 
-    # Train the model for 'step' epochs
-    history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), steps=step, batch_size=32),
-        initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
-        verbose=1, validation_data=TestingData()).history
-    steps += step
-
-
     h2kts = {}
     for p, w in tagged.items():
         if w != new_whale:  # Use only identified whales
@@ -749,6 +741,14 @@ def make_steps(step, ampl):
     labels = [tagged[h2p[h_]] for h_ in test]
 
     print('cv score: ' + str(map_per_set(labels, predictions)))
+
+    # Train the model for 'step' epochs
+    history = model.fit_generator(
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), steps=step, batch_size=32),
+        initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
+        verbose=1, validation_data=TestingData()).history
+    steps += step
+
 
     # Collect history data
     history['epochs'] = steps

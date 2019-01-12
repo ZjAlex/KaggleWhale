@@ -688,6 +688,38 @@ def compute_score(verbose=1):
     return features, score
 
 
+def val_score(threshold):
+    vtop = 0
+    vhigh = 0
+    pos = [0, 0, 0, 0, 0, 0]
+    predictions = []
+    for i, p in enumerate(tqdm(test)):
+        t = []
+        s = set()
+        a = score[i, :]
+        for j in list(reversed(np.argsort(a))):
+            h = known[j]
+            if a[j] < threshold and new_whale not in s:
+                pos[len(t)] += 1
+                s.add(new_whale)
+                t.append(new_whale)
+                if len(t) == 5: break;
+            for w in h2ws[h]:
+                assert w != new_whale
+                if w not in s:
+                    if a[j] > 1.0:
+                        vtop += 1
+                    elif a[j] >= threshold:
+                        vhigh += 1
+                    s.add(w)
+                    t.append(w)
+                    if len(t) == 5: break;
+            if len(t) == 5: break;
+        if new_whale not in s: pos[5] += 1
+        assert len(t) == 5 and len(s) == 5
+        predictions.append(t[:5])
+    return predictions
+
 def make_steps(step, ampl):
     """
     Perform training epochs
@@ -780,39 +812,6 @@ if stage == 'train':
 if os.path.isfile('/home/zhangjie/KaggleWhale/orimodel_30epochs.model'):
     tmp = keras.models.load_model('/home/zhangjie/KaggleWhale/orimodel_30epochs.model')
     model.set_weights(tmp.get_weights())
-
-
-def val_score(threshold):
-    vtop = 0
-    vhigh = 0
-    pos = [0, 0, 0, 0, 0, 0]
-    predictions = []
-    for i, p in enumerate(tqdm(test)):
-        t = []
-        s = set()
-        a = score[i, :]
-        for j in list(reversed(np.argsort(a))):
-            h = known[j]
-            if a[j] < threshold and new_whale not in s:
-                pos[len(t)] += 1
-                s.add(new_whale)
-                t.append(new_whale)
-                if len(t) == 5: break;
-            for w in h2ws[h]:
-                assert w != new_whale
-                if w not in s:
-                    if a[j] > 1.0:
-                        vtop += 1
-                    elif a[j] >= threshold:
-                        vhigh += 1
-                    s.add(w)
-                    t.append(w)
-                    if len(t) == 5: break;
-            if len(t) == 5: break;
-        if new_whale not in s: pos[5] += 1
-        assert len(t) == 5 and len(s) == 5
-        predictions.append(t[:5])
-    return predictions
 
 
 def prepare_submission(threshold, filename):

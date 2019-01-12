@@ -688,7 +688,7 @@ def compute_score(verbose=1):
     return features, score
 
 
-def val_score(threshold):
+def val_score(threshold, known, h2kts):
     vtop = 0
     vhigh = 0
     pos = [0, 0, 0, 0, 0, 0]
@@ -704,7 +704,7 @@ def val_score(threshold):
                 s.add(new_whale)
                 t.append(new_whale)
                 if len(t) == 5: break;
-            for w in h2ws[h]:
+            for w in h2kts[h]:
                 assert w != new_whale
                 if w not in s:
                     if a[j] > 1.0:

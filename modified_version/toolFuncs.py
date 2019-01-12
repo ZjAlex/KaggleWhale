@@ -60,25 +60,26 @@ def get_p2bb():
 
 
 # remove new_whale
-def get_p2w(tagged):
+def get_p2ws(tagged):
     new_whale = 'new_whale'
-    p2w = {}
+    p2ws = {}
     for p, w in tagged.items():
         if w != new_whale:
-            if p not in p2w:
-                p2w[p] = []
-            if w not in p2w[p]:
-                p2w[p].append(w)
-    return p2w
+            if p not in p2ws:
+                p2ws[p] = []
+            if w not in p2ws[p]:
+                p2ws[p].append(w)
+    return p2ws
 
 
-def get_w2ps(p2w):
+def get_w2ps(p2ws):
     w2ps = {}
-    for p, w in p2w.items():
-        if w not in w2ps:
-            w2ps[w] = []
-        if p not in w2ps[w]:
-            w2ps[w].append(p)
+    for p, ws in p2ws.items():
+        for w in ws:
+            if w not in w2ps:
+                w2ps[w] = []
+            if p not in w2ps[w]:
+                w2ps[w].append(p)
     return w2ps
 
 

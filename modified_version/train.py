@@ -26,9 +26,9 @@ p2size = get_p2size(join)
 
 p2bb = get_p2bb()
 
-p2w = get_p2w(tagged)
+p2ws = get_p2ws(tagged)
 
-w2ps = get_w2ps(p2w)
+w2ps = get_w2ps(p2ws)
 
 train, test, train_set, test_set, w2ts, w2vs, t2i, v2i = split_train_test(w2ps)
 

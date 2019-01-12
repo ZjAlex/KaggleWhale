@@ -769,7 +769,7 @@ def make_steps(step, ampl):
     score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
     print("计算结束")
     score = score_reshape(score, fknown, fsubmit)
-    predictions = val_score(0.95)
+    predictions = val_score(0.95, known, h2kts)
     labels = [tagged[h2p[h_]] for h_ in test]
 
     print('cv score: ' + str(map_per_set(labels, predictions)))

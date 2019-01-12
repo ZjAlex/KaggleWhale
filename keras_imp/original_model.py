@@ -757,7 +757,7 @@ if True:
         set_lr(model, args.lr)
         for _ in range(args.epochs):
             make_steps(args.steps, args.noise)
-        model.save_weights('attention_'+str(args.output_path)+'epochs_model_weights.h5')
+            model.save_weights('attention_'+str(args.output_path)+'epochs_model_weights.h5')
 
 
 def prepare_submission(threshold, filename):

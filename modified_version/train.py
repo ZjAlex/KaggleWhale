@@ -160,10 +160,10 @@ class TrainingData(Sequence):
         self.steps -= 1
         self.match = []
         self.unmatch = []
-        # print("计算unmatch pairs")
-        # start0 = time.time()
+        print("计算unmatch pairs")
+        start0 = time.time()
         _, _, x = lapjv(self.score)  # Solve the linear assignment problem
-        # print("计算unmatch pairs结束,花费时间： " + str(time.time() - start0))
+        print("计算unmatch pairs结束,花费时间： " + str(time.time() - start0))
         y = np.arange(len(x), dtype=np.int32)
 
         # Compute a derangement for matching whales
@@ -307,7 +307,7 @@ def make_steps(step, ampl):
 
     # Train the model for 'step' epochs
     history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), steps=step, batch_size=32),
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), steps=step, batch_size=64),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
     steps += step

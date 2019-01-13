@@ -305,7 +305,7 @@ def make_steps(step, ampl):
 
     random.shuffle(train)
 
-    if steps == 0:
+    if steps == -1:
         p2wts = {}
         for p, w in tagged.items():
             if w != new_whale:  # Use only identified whales

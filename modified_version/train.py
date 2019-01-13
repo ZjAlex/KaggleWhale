@@ -165,7 +165,7 @@ class TrainingData(Sequence):
             j += 1
         for i in range(size):
             d[i, :, :, :] = read_for_training(self.train_soft[(start + i) % len(self.train_soft)], p2size, p2bb)
-            e[i, w2idx[p2ws[self.train_soft[(start + i) % len(test)]][0]]] = 1
+            e[i, w2idx[p2ws[self.train_soft[(start + i) % len(self.train_soft)]][0]]] = 1
         return [a, b, d], [c, e]
 
     def on_epoch_end(self):

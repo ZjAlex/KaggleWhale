@@ -649,6 +649,8 @@ def val_score(threshold, known, h2kts, score_val):
 
 class cv_callback(Callback):
     def on_epoch_end(self, epoch, logs=None):
+        if epoch%5 !=0:
+            return
         h2kts = {}
 
         for p, w in tagged.items():
@@ -701,33 +703,33 @@ def make_steps(step, ampl):
     # Map training picture hash value to index in 'train' array
     t2i = {}
     for i, t in enumerate(train): t2i[t] = i
+    if steps == 0:
+        h2kts = {}
+        for p, w in tagged.items():
+            if w != new_whale:  # Use only identified whales
+                h = p2h[p]
+                if h in train_set:
+                    if h not in h2kts: h2kts[h] = []
+                    if w not in h2kts[h]: h2kts[h].append(w)
+        known = sorted(list(h2kts.keys()))
 
-    h2kts = {}
-    for p, w in tagged.items():
-        if w != new_whale:  # Use only identified whales
-            h = p2h[p]
-            if h in train_set:
-                if h not in h2kts: h2kts[h] = []
-                if w not in h2kts[h]: h2kts[h].append(w)
-    known = sorted(list(h2kts.keys()))
+        # Dictionary of picture indices
+        kt2i = {}
+        for i, h in enumerate(known): kt2i[h] = i
 
-    # Dictionary of picture indices
-    kt2i = {}
-    for i, h in enumerate(known): kt2i[h] = i
+        # Evaluate the model.
+        print("计算fknown")
+        fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
+        print("计算fsubmit")
+        fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
+        print("计算score")
+        score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+        print("计算结束")
+        score_val = score_reshape(score_val, fknown, fsubmit)
+        predictions = val_score(0.99, known, h2kts,score_val)
+        labels = [tagged[h2ps[h_][0]] for h_ in test]
 
-    # Evaluate the model.
-    print("计算fknown")
-    fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
-    print("计算fsubmit")
-    fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
-    print("计算score")
-    score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
-    print("计算结束")
-    score_val = score_reshape(score_val, fknown, fsubmit)
-    predictions = val_score(0.99, known, h2kts,score_val)
-    labels = [tagged[h2ps[h_][0]] for h_ in test]
-
-    print('cv score: ' + str(map_per_set(labels, predictions)))
+        print('cv score: ' + str(map_per_set(labels, predictions)))
 
     # Compute the match score for each picture pair
     features, score = compute_score()

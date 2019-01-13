@@ -34,6 +34,8 @@ w2ps = get_w2ps(p2ws)
 
 train, test, train_set, test_set, w2ts, w2vs, t2i, v2i = split_train_test(w2ps)
 
+w2idx = get_w2idx(w2ts)
+
 model, branch_model, head_model = build_model(args.lr, args.reg)
 new_whale = 'new_whale'
 
@@ -75,16 +77,22 @@ class TestingData(Sequence):
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
+        d = np.zeros((size, 2931), dtype=K.floatx())
+        e = np.zeros((size, 2931), dtype=K.floatx())
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_validation(self.match[j][0], p2size, p2bb)
+            d[i, w2idx[p2ws[self.match[j][0]]]] = 1
             b[i, :, :, :] = read_for_validation(self.match[j][1], p2size, p2bb)
+            e[i, w2idx[p2ws[self.match[j][1]]]] = 1
             c[i, 0] = 1  # This is a match
             a[i + 1, :, :, :] = read_for_validation(self.unmatch[j][0], p2size, p2bb)
+            d[i + 1, w2idx[p2ws[self.unmatch[j][0]]]] = 1
             b[i + 1, :, :, :] = read_for_validation(self.unmatch[j][1], p2size, p2bb)
+            e[i + 1, w2idx[p2ws[self.unmatch[j][1]]]] = 1
             c[i + 1, 0] = 0  # Different whales
             j += 1
-        return [a, b], c
+        return [a, b], [c, np.concatenate((d, e), axis=0)]
 
     def get_test_data(self):
         self.match = []
@@ -143,16 +151,23 @@ class TrainingData(Sequence):
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
+        d = np.zeros((size, 2931), dtype=K.floatx())
+        e = np.zeros((size, 2931), dtype=K.floatx())
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_training(self.match[j][0], p2size, p2bb)
+            d[i, w2idx[p2ws[self.match[j][0]]]] = 1
             b[i, :, :, :] = read_for_training(self.match[j][1], p2size, p2bb)
+            e[i, w2idx[p2ws[self.match[j][1]]]] = 1
             c[i, 0] = 1  # This is a match
             a[i + 1, :, :, :] = read_for_training(self.unmatch[j][0], p2size, p2bb)
+            d[i + 1, w2idx[p2ws[self.unmatch[j][0]]]] = 1
             b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1], p2size, p2bb)
+            e[i + 1, w2idx[p2ws[self.unmatch[j][1]]]] = 1
             c[i + 1, 0] = 0  # Different whales
             j += 1
-        return [a, b], c
+
+        return [a, b], [c, np.concatenate((d, e), axis=0)]
 
     def on_epoch_end(self):
         if self.steps <= 0:

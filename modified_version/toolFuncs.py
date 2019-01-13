@@ -83,6 +83,14 @@ def read_raw_image(p):
     return img
 
 
+def get_w2idx(w2ts):
+    w2idx = {}
+    for idx, w in enumerate(w2ts.keys()):
+        if w not in w2idx:
+            w2idx[w] = idx
+    return w2idx
+
+
 def letterbox_image(image, size):
     '''resize image with unchanged aspect ratio using padding'''
     iw, ih = image.size
@@ -135,7 +143,8 @@ def read_cropped_image(p, p2size, p2bb, augment):
         shear = np.random.uniform(-10, 10)  # random shear
         img = apply_affine_transform(img, theta, tx, ty, shear, zx, zy)
 
-    img = (img - 127.5) / 128.0
+    img -= np.mean(img, keepdims=True)
+    img /= np.std(img, keepdims=True) + K.epsilon()
     return img
 
 

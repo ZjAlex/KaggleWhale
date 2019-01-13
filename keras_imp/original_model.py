@@ -607,7 +607,7 @@ def compute_score(verbose=1):
     """
     features = branch_model.predict_generator(FeatureGen(train, verbose=verbose), max_queue_size=12, workers=6,
                                               verbose=0)
-    score, _ = head_model.predict_generator(ScoreGen(features, verbose=verbose), max_queue_size=12, workers=6, verbose=0)
+    score = head_model.predict_generator(ScoreGen(features, verbose=verbose), max_queue_size=12, workers=6, verbose=0)
     score = score_reshape(score, features)
     return features, score
 
@@ -669,7 +669,7 @@ class cv_callback(Callback):
         print("计算fsubmit")
         fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
         print("计算score")
-        score_val, _ = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+        score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
         print("计算结束")
         score_val = score_reshape(score_val, fknown, fsubmit)
         predictions = val_score(0.99, known, h2kts, score_val)
@@ -721,7 +721,7 @@ def make_steps(step, ampl):
         print("计算fsubmit")
         fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
         print("计算score")
-        score_val, _ = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+        score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
         print("计算结束")
         score_val = score_reshape(score_val, fknown, fsubmit)
         predictions = val_score(0.99, known, h2kts,score_val)
@@ -818,7 +818,7 @@ for i, h in enumerate(known): h2i[h] = i
 # Evaluate the model.
 fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
 fsubmit = branch_model.predict_generator(FeatureGen(submit), max_queue_size=20, workers=10, verbose=0)
-score, _ = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
 score = score_reshape(score, fknown, fsubmit)
 
 # Generate the subsmission file.

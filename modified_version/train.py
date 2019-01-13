@@ -21,7 +21,7 @@ parser.add_argument('--reg', type=float, help='regularization rate---default: 0.
 parser.add_argument('--noise', type=float, help='random noise to decide the difficult level of the trainning pairs---default: 1.0', default=1.0)
 args = parser.parse_args(sys.argv[1:])
 
-os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+os.environ['CUDA_VISIBLE_DEVICES'] = '2,3'
 
 tagged, submit, join = get_alldata()
 
@@ -356,7 +356,7 @@ def make_steps(step, ampl):
 
     # Train the model for 'step' epochs
     history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, steps=step, batch_size=64),
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, steps=step, batch_size=256),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
     steps += step
@@ -378,9 +378,43 @@ if True:
                            by_name=True, skip_mismatch=True, reshape=True)
     print('training')
     if args.stage == 'train':
-        set_lr(model, args.lr)
-        for _ in range(args.epochs):
-            make_steps(args.steps, args.noise)
+        # epoch -> 10
+        make_steps(10, 1000)
+        ampl = 100.0
+        for _ in range(2):
+            print('noise ampl.  = ', ampl)
+            make_steps(5, ampl)
+            ampl = max(1.0, 100 ** -0.1 * ampl)
+        # epoch -> 150
+        for _ in range(9): make_steps(5, 1.0)
+        # epoch -> 200
+        set_lr(model, 16e-5)
+        for _ in range(5): make_steps(5, 0.5)
+        # epoch -> 240
+        set_lr(model, 4e-5)
+        for _ in range(4): make_steps(5, 0.25)
+        # epoch -> 250
+        set_lr(model, 1e-5)
+        for _ in range(1): make_steps(5, 0.25)
+        # epoch -> 300
+        weights = model.get_weights()
+        model, branch_model, head_model = build_model(64e-5, 0.0002)
+        model.set_weights(weights)
+        for _ in range(5): make_steps(5, 1.0)
+        # epoch -> 350
+        set_lr(model, 16e-5)
+        for _ in range(5): make_steps(5, 0.5)
+        # epoch -> 390
+        set_lr(model, 4e-5)
+        for _ in range(4): make_steps(5, 0.25)
+        # epoch -> 400
+        set_lr(model, 1e-5)
+        for _ in range(1): make_steps(5, 0.25)
+
+
+        # set_lr(model, args.lr)
+        # for _ in range(args.epochs):
+        #     make_steps(args.steps, args.noise)
         model.save_weights('attention_'+args.output_path+'_model_weights.h5')
 
 

@@ -83,12 +83,25 @@ def read_raw_image(p):
     return img
 
 
-def get_w2idx(w2ts):
+def get_w2idx(train_soft, w2ps):
+    train_soft_set = set(train_soft)
+    w2ts_soft = {}
+    for w, ps in w2ps.items():
+        for p in ps:
+            if p in train_soft_set:
+                if w not in w2ts_soft:
+                    w2ts_soft[w] = []
+                if p not in w2ts_soft[w]:
+                    w2ts_soft[w].append(p)
+    for w, ts in w2ts_soft.items():
+        w2ts_soft[w] = np.array(ts)
+
     w2idx = {}
-    for idx, w in enumerate(w2ts.keys()):
+    for idx, w in enumerate(w2ts_soft.keys()):
         if w not in w2idx:
             w2idx[w] = idx
-    return w2idx
+    return w2ts_soft, w2idx
+
 
 
 def letterbox_image(image, size):
@@ -160,13 +173,18 @@ def split_train_test(w2ps):
     np.random.seed(44)
     train = []
     test = []
+    train_soft = []
     for ps in w2ps.values():
         if len(ps) >= 8:
             np.random.shuffle(ps)
             test += ps[-3:]
             train += ps[:-3]
+            train_soft += ps[:-3]
         elif len(ps) > 1:
             train += ps
+            train_soft += ps
+        else:
+            train_soft += ps
     np.random.seed(None)
     train_set = set(train)
     test_set = set(test)
@@ -202,7 +220,7 @@ def split_train_test(w2ps):
     for i, v in enumerate(test):
         v2i[v] = i
 
-    return train, test, train_set, test_set, w2ts, w2vs, t2i, v2i
+    return train, test, train_set, test_set, w2ts, w2vs, t2i, v2i, train_soft
 
 
 def map_per_image(label, predictions):

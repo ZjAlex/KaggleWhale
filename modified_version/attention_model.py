@@ -4,6 +4,7 @@ from keras.engine.topology import Input
 from keras.layers import Activation, Add, BatchNormalization, Concatenate, Conv2D, Dense, Flatten, GlobalMaxPooling2D, Lambda, MaxPooling2D, Reshape,Multiply
 from keras.models import Model
 import keras.backend as K
+from keras.layers import Dropout
 
 
 def subblock(x, filter, block, num, **kwargs):
@@ -105,8 +106,11 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     head_model = Model([xa_inp, xb_inp], x, name='head')
 
     x_inp_ = Input(shape=branch_model.output_shape[1:])
-    x_all = Dense(512, activation='relu', kernel_regularizer=regul)(x_inp_)
-    x_all = Dense(2931, activation='softmax')(x_all)
+    x_all = Dropout(0.5)(x_inp_)
+    x_all = Dense(512, activation='relu', kernel_regularizer=regul)(x_all)
+    x_all = Dropout(0.5)(x_all)
+    x_all = Dense(512, activation='relu', kernel_regularizer=regul)(x_all)
+    x_all = Dense(5004, activation='softmax')(x_all)
     soft_model = Model(x_inp_, x_all, name='soft')
     ########################
     # SIAMESE NEURAL NETWORK
@@ -115,13 +119,14 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     # and then the head model on the resulting 512-vectors.
     img_a = Input(shape=img_shape)
     img_b = Input(shape=img_shape)
+    img_c = Input(shape=img_shape)
     xa = branch_model(img_a)
     xb = branch_model(img_b)
+    xc = branch_model(img_c)
     x = head_model([xa, xb])
-    x_a = soft_model(xa)
-    x_b = soft_model(xb)
-    model = Model([img_a, img_b], [x, x_a, x_b])
-    model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy', 'categorical_crossentropy'], metrics=['acc'],
-                  loss_weights=[1, 0.1, 0.1])
+    y_softmax = soft_model(xc)
+    model = Model([img_a, img_b, img_c], [x, y_softmax])
+    model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy'], metrics=['acc'],
+                  loss_weights=[1, 0.5])
     return model, branch_model, head_model
 

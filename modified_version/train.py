@@ -32,9 +32,9 @@ p2ws = get_p2ws(tagged)
 
 w2ps = get_w2ps(p2ws)
 
-train, test, train_set, test_set, w2ts, w2vs, t2i, v2i = split_train_test(w2ps)
+train, test, train_set, test_set, w2ts, w2vs, t2i, v2i, train_soft = split_train_test(w2ps)
 
-w2idx = get_w2idx(w2ts)
+w2ts_soft, w2idx = get_w2idx(train_soft, w2ps)
 
 model, branch_model, head_model = build_model(args.lr, args.reg)
 new_whale = 'new_whale'
@@ -77,22 +77,21 @@ class TestingData(Sequence):
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
-        d = np.zeros((size, 2931), dtype=K.floatx())
-        e = np.zeros((size, 2931), dtype=K.floatx())
+        d = np.zeros((size,) + img_shape, dtype=K.floatx())
+        e = np.zeros((size, 5004), dtype=np.int8)
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_validation(self.match[j][0], p2size, p2bb)
-            d[i, w2idx[p2ws[self.match[j][0]][0]]] = 1
             b[i, :, :, :] = read_for_validation(self.match[j][1], p2size, p2bb)
-            e[i, w2idx[p2ws[self.match[j][1]][0]]] = 1
             c[i, 0] = 1  # This is a match
             a[i + 1, :, :, :] = read_for_validation(self.unmatch[j][0], p2size, p2bb)
-            d[i + 1, w2idx[p2ws[self.unmatch[j][0]][0]]] = 1
             b[i + 1, :, :, :] = read_for_validation(self.unmatch[j][1], p2size, p2bb)
-            e[i + 1, w2idx[p2ws[self.unmatch[j][1]][0]]] = 1
             c[i + 1, 0] = 0  # Different whales
             j += 1
-        return [a, b], [c, d, e]
+        for i in range(size):
+            d[i, :, :, :] = read_for_validation(test[(start + i) % len(test)], p2size, p2bb)
+            e[i, w2idx[p2ws[test[(start + i) % len(test)]][0]]] = 1
+        return [a, b, d], [c, e]
 
     def get_test_data(self):
         self.match = []
@@ -126,7 +125,7 @@ class TestingData(Sequence):
 
 
 class TrainingData(Sequence):
-    def __init__(self, score, steps=1000, batch_size=32):
+    def __init__(self, score, train_soft, steps=1000, batch_size=32):
         """
         @param score the cost matrix for the picture matching
         @param steps the number of epoch we are planning with this score matrix
@@ -135,6 +134,7 @@ class TrainingData(Sequence):
         self.score = -score  # Maximizing the score is the same as minimuzing -score.
         self.steps = steps
         self.batch_size = batch_size
+        self.train_soft = train_soft
         for ts in w2ts.values():
             idxs = [t2i[t] for t in ts]
             for i in idxs:
@@ -151,27 +151,27 @@ class TrainingData(Sequence):
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
-        d = np.zeros((size, 2931), dtype=K.floatx())
-        e = np.zeros((size, 2931), dtype=K.floatx())
+        d = np.zeros((size,) + img_shape, dtype=K.floatx())
+        e = np.zeros((size, 5004), dtype=np.int8)
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_training(self.match[j][0], p2size, p2bb)
-            d[i, w2idx[p2ws[self.match[j][0]][0]]] = 1
             b[i, :, :, :] = read_for_training(self.match[j][1], p2size, p2bb)
-            e[i, w2idx[p2ws[self.match[j][1]][0]]] = 1
             c[i, 0] = 1  # This is a match
             a[i + 1, :, :, :] = read_for_training(self.unmatch[j][0], p2size, p2bb)
-            d[i + 1, w2idx[p2ws[self.unmatch[j][0]][0]]] = 1
             b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1], p2size, p2bb)
-            e[i + 1, w2idx[p2ws[self.unmatch[j][1]][0]]] = 1
             c[i + 1, 0] = 0  # Different whales
             j += 1
-
-        return [a, b], [c, d, e]
+        for i in range(size):
+            d[i, :, :, :] = read_for_training(self.train_soft[(start + i) % len(self.train_soft)], p2size, p2bb)
+            e[i, w2idx[p2ws[self.train_soft[(start + i) % len(test)]][0]]] = 1
+        return [a, b, d], [c, e]
 
     def on_epoch_end(self):
         if self.steps <= 0:
             return  # Skip this on the last epoch.
+        np.random.seed(None)
+        np.random.shuffle(self.train_soft)
         self.steps -= 1
         self.match = []
         self.unmatch = []
@@ -339,7 +339,7 @@ def make_steps(step, ampl):
 
     # Train the model for 'step' epochs
     history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), steps=step, batch_size=64),
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, steps=step, batch_size=64),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
     steps += step

@@ -35,7 +35,7 @@ w2ps = get_w2ps(p2ws)
 
 train, test, train_set, test_set, w2ts, w2vs, t2i, v2i, train_soft = split_train_test(w2ps)
 
-w2ts_soft, w2idx = get_w2idx(train_soft, w2ps)
+w2ts_soft, w2idx, train_soft_set = get_w2idx(train_soft, w2ps)
 
 model, branch_model, head_model = build_model(args.lr, args.reg)
 new_whale = 'new_whale'
@@ -54,9 +54,24 @@ known = sorted(list(p2wts.keys()))
 kt2i = {}
 for i, p in enumerate(known): kt2i[p] = i
 
+#
+# p2wts_soft = {}
+# for p, w in tagged.items():
+#     if w != new_whale:  # Use only identified whales
+#         if p in train_soft_set:
+#             if p not in p2wts_soft:
+#                 p2wts_soft[p] = []
+#             if w not in p2wts_soft[p]:
+#                 p2wts_soft[p].append(w)
+# known_soft = sorted(list(p2wts_soft.keys()))
+#
+# # Dictionary of picture indices
+# kt2i_soft = {}
+# for i, p in enumerate(known_soft): kt2i_soft[p] = i
+
 
 class TestingData(Sequence):
-    def __init__(self, batch_size=32):
+    def __init__(self, batch_size=128):
         super(TestingData, self).__init__()
         np.random.seed(10)
         self.score = -1 * np.random.random_sample(size=(len(test), len(test)))
@@ -126,7 +141,7 @@ class TestingData(Sequence):
 
 
 class TrainingData(Sequence):
-    def __init__(self, score, train_soft, steps=1000, batch_size=32):
+    def __init__(self, score, train_soft, steps=1000, batch_size=128):
         """
         @param score the cost matrix for the picture matching
         @param steps the number of epoch we are planning with this score matrix
@@ -280,7 +295,8 @@ def compute_score(verbose=1):
 
 class cv_callback(Callback):
     def on_epoch_end(self, epoch, logs=None):
-
+        if epoch % 5 != 0:
+            return
         # Evaluate the model.
         print("计算fknown")
         fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
@@ -290,7 +306,7 @@ class cv_callback(Callback):
         score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
         print("计算结束")
         score_val = score_reshape(score_val, fknown, fsubmit)
-        predictions = val_score(test, 0.99, known, p2wts, score_val)
+        predictions = val_score(test, 0.90, known, p2wts, score_val)
         labels = [tagged[p] for p in test]
 
         print('cv score: ' + str(map_per_set(labels, predictions)))
@@ -330,7 +346,7 @@ def make_steps(step, ampl):
         score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
         print("计算结束")
         score_val = score_reshape(score_val, fknown, fsubmit)
-        predictions = val_score(test, 0.99, known, p2wts, score_val)
+        predictions = val_score(test, 0.90, known, p2wts, score_val)
         labels = [tagged[p] for p in test]
 
         print('cv score: ' + str(map_per_set(labels, predictions)))

@@ -100,7 +100,7 @@ def get_w2idx(train_soft, w2ps):
     for idx, w in enumerate(w2ts_soft.keys()):
         if w not in w2idx:
             w2idx[w] = idx
-    return w2ts_soft, w2idx
+    return w2ts_soft, w2idx, train_soft_set
 
 
 
@@ -189,6 +189,7 @@ def split_train_test(w2ps):
     train_set = set(train)
     test_set = set(test)
     random.shuffle(train)
+    random.shuffle(train_soft)
 
     w2ts = {}  # Associate the image ids from train to each whale id.
     for w, ps in w2ps.items():

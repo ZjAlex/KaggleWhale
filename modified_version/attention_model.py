@@ -87,10 +87,6 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     xa_inp = Input(shape=branch_model.output_shape[1:])
     xb_inp = Input(shape=branch_model.output_shape[1:])
 
-    x_all = Concatenate(axis=0)([xa_inp, xb_inp])
-    x_all = Dense(512, activation='relu')(x_all)
-    x_all = Dense(2931, activation='softmax')(x_all)
-
     x1 = Lambda(lambda x: x[0] * x[1])([xa_inp, xb_inp])
     x2 = Lambda(lambda x: x[0] + x[1])([xa_inp, xb_inp])
     x3 = Lambda(lambda x: K.abs(x[0] - x[1]))([xa_inp, xb_inp])
@@ -107,8 +103,11 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     # Weighted sum implemented as a Dense layer.
     x = Dense(1, use_bias=True, activation=activation, name='weighted-average')(x)
     head_model = Model([xa_inp, xb_inp], x, name='head')
-    soft_model = Model([xa_inp, xb_inp], x_all, name='soft')
 
+    x_inp_ = Input(shape=branch_model.output_shape[1:])
+    x_all = Dense(512, activation='relu')(x_inp_)
+    x_all = Dense(2931, activation='softmax')(x_all)
+    soft_model = Model(x_inp_, x_all, name='soft')
     ########################
     # SIAMESE NEURAL NETWORK
     ########################
@@ -119,8 +118,9 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     xa = branch_model(img_a)
     xb = branch_model(img_b)
     x = head_model([xa, xb])
-    x_all = soft_model([xa, xb])
-    model = Model([img_a, img_b], [x, x_all])
-    model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy'], metrics=['acc'])
+    x_a = soft_model(xa)
+    x_b = soft_model(xb)
+    model = Model([img_a, img_b], [x, x_a, x_b])
+    model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy', 'categorical_crossentropy'], metrics=['acc'])
     return model, branch_model, head_model
 

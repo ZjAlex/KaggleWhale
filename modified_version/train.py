@@ -92,7 +92,7 @@ class TestingData(Sequence):
             e[i + 1, w2idx[p2ws[self.unmatch[j][1]][0]]] = 1
             c[i + 1, 0] = 0  # Different whales
             j += 1
-        return [a, b], [c, np.concatenate((d, e), axis=0)]
+        return [a, b], [c, d, e]
 
     def get_test_data(self):
         self.match = []
@@ -167,7 +167,7 @@ class TrainingData(Sequence):
             c[i + 1, 0] = 0  # Different whales
             j += 1
 
-        return [a, b], [c, np.concatenate((d, e), axis=0)]
+        return [a, b], [c, d, e]
 
     def on_epoch_end(self):
         if self.steps <= 0:

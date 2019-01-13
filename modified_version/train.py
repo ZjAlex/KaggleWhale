@@ -303,19 +303,48 @@ def make_steps(step, ampl):
     """
     global w2ts, t2i, steps, features, score, histories
 
-    # Evaluate the model.
-    print("计算fknown")
-    fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
-    print("计算fsubmit")
-    fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
-    print("计算score")
-    score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
-    print("计算结束")
-    score_val = score_reshape(score_val, fknown, fsubmit)
-    predictions = val_score(test, 0.99, known, p2wts, score_val)
-    labels = [tagged[p] for p in test]
+    random.shuffle(train)
 
-    print('cv score: ' + str(map_per_set(labels, predictions)))
+    # Map whale id to the list of associated training picture hash value
+    w2ts = {}  # Associate the image ids from train to each whale id.
+    for w, ps in w2ps.items():
+        for p in ps:
+            if p in train_set:
+                if w not in w2ts:
+                    w2ts[w] = []
+                if p not in w2ts[w]:
+                    w2ts[w].append(p)
+    for w, ts in w2ts.items():
+        w2ts[w] = np.array(ts)
+
+    if steps == 0:
+        p2wts = {}
+        for p, w in tagged.items():
+            if w != new_whale:  # Use only identified whales
+                if p in train_set:
+                    if p not in p2wts:
+                        p2wts[p] = []
+                    if w not in p2wts[p]:
+                        p2wts[p].append(w)
+        known = sorted(list(p2wts.keys()))
+
+        # Dictionary of picture indices
+        kt2i = {}
+        for i, p in enumerate(known): kt2i[p] = i
+
+        # Evaluate the model.
+        print("计算fknown")
+        fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
+        print("计算fsubmit")
+        fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
+        print("计算score")
+        score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+        print("计算结束")
+        score_val = score_reshape(score_val, fknown, fsubmit)
+        predictions = val_score(test, 0.99, known, p2wts, score_val)
+        labels = [tagged[p] for p in test]
+
+        print('cv score: ' + str(map_per_set(labels, predictions)))
 
     # Compute the match score for each picture pair
     features, score = compute_score()

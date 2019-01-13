@@ -119,7 +119,7 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     xa = branch_model(img_a)
     xb = branch_model(img_b)
     x = head_model([xa, xb])
-    x_all = soft_model([xa_inp, xb_inp])
+    x_all = soft_model([xa, xb])
     model = Model([img_a, img_b], [x, x_all])
     model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy'], metrics=['acc'])
     return model, branch_model, head_model

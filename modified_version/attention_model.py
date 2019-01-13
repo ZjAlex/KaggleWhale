@@ -105,7 +105,7 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     head_model = Model([xa_inp, xb_inp], x, name='head')
 
     x_inp_ = Input(shape=branch_model.output_shape[1:])
-    x_all = Dense(512, activation='relu')(x_inp_)
+    x_all = Dense(512, activation='relu', kernel_regularizer=regul)(x_inp_)
     x_all = Dense(2931, activation='softmax')(x_all)
     soft_model = Model(x_inp_, x_all, name='soft')
     ########################
@@ -122,6 +122,6 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     x_b = soft_model(xb)
     model = Model([img_a, img_b], [x, x_a, x_b])
     model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy', 'categorical_crossentropy'], metrics=['acc'],
-                  loss_weights=[1, 0.2, 0.2])
+                  loss_weights=[1, 0.1, 0.1])
     return model, branch_model, head_model
 

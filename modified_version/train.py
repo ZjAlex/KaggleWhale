@@ -9,7 +9,7 @@ from toolFuncs import *
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('--gpu', type=int, help='decide gpu---default: 3', default=3)
+parser.add_argument('--gpu', type=str, help='decide gpu---default: 2', default='2')
 parser.add_argument('--input_path', type=str, help='input path')
 parser.add_argument('--output_path', type=str, help='output path')
 parser.add_argument('--stage', type=str, help='train or test----default: train', default='train')
@@ -21,7 +21,7 @@ parser.add_argument('--reg', type=float, help='regularization rate---default: 0.
 parser.add_argument('--noise', type=float, help='random noise to decide the difficult level of the trainning pairs---default: 1.0', default=1.0)
 args = parser.parse_args(sys.argv[1:])
 
-os.environ['CUDA_VISIBLE_DEVICES'] = str(int)
+os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
 tagged, submit, join = get_alldata()
 

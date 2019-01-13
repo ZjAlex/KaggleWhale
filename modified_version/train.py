@@ -82,14 +82,14 @@ class TestingData(Sequence):
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_validation(self.match[j][0], p2size, p2bb)
-            d[i, w2idx[p2ws[self.match[j][0]]]] = 1
+            d[i, w2idx[p2ws[self.match[j][0]][0]]] = 1
             b[i, :, :, :] = read_for_validation(self.match[j][1], p2size, p2bb)
-            e[i, w2idx[p2ws[self.match[j][1]]]] = 1
+            e[i, w2idx[p2ws[self.match[j][1]][0]]] = 1
             c[i, 0] = 1  # This is a match
             a[i + 1, :, :, :] = read_for_validation(self.unmatch[j][0], p2size, p2bb)
-            d[i + 1, w2idx[p2ws[self.unmatch[j][0]]]] = 1
+            d[i + 1, w2idx[p2ws[self.unmatch[j][0]][0]]] = 1
             b[i + 1, :, :, :] = read_for_validation(self.unmatch[j][1], p2size, p2bb)
-            e[i + 1, w2idx[p2ws[self.unmatch[j][1]]]] = 1
+            e[i + 1, w2idx[p2ws[self.unmatch[j][1]][0]]] = 1
             c[i + 1, 0] = 0  # Different whales
             j += 1
         return [a, b], [c, np.concatenate((d, e), axis=0)]
@@ -156,14 +156,14 @@ class TrainingData(Sequence):
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_training(self.match[j][0], p2size, p2bb)
-            d[i, w2idx[p2ws[self.match[j][0]]]] = 1
+            d[i, w2idx[p2ws[self.match[j][0]][0]]] = 1
             b[i, :, :, :] = read_for_training(self.match[j][1], p2size, p2bb)
-            e[i, w2idx[p2ws[self.match[j][1]]]] = 1
+            e[i, w2idx[p2ws[self.match[j][1]][0]]] = 1
             c[i, 0] = 1  # This is a match
             a[i + 1, :, :, :] = read_for_training(self.unmatch[j][0], p2size, p2bb)
-            d[i + 1, w2idx[p2ws[self.unmatch[j][0]]]] = 1
+            d[i + 1, w2idx[p2ws[self.unmatch[j][0]][0]]] = 1
             b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1], p2size, p2bb)
-            e[i + 1, w2idx[p2ws[self.unmatch[j][1]]]] = 1
+            e[i + 1, w2idx[p2ws[self.unmatch[j][1]][0]]] = 1
             c[i + 1, 0] = 0  # Different whales
             j += 1
 
@@ -304,18 +304,6 @@ def make_steps(step, ampl):
     global w2ts, t2i, steps, features, score, histories
 
     random.shuffle(train)
-
-    # Map whale id to the list of associated training picture hash value
-    w2ts = {}  # Associate the image ids from train to each whale id.
-    for w, ps in w2ps.items():
-        for p in ps:
-            if p in train_set:
-                if w not in w2ts:
-                    w2ts[w] = []
-                if p not in w2ts[w]:
-                    w2ts[w].append(p)
-    for w, ts in w2ts.items():
-        w2ts[w] = np.array(ts)
 
     if steps == 0:
         p2wts = {}

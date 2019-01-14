@@ -178,8 +178,10 @@ def split_train_test(w2ps):
         if len(ps) >= 8:
             np.random.shuffle(ps)
             test += ps[-3:]
-            train += ps[:-3]
-            train_soft += ps[:-3]
+            #train += ps[:-3]
+            #train_soft += ps[:-3]
+            train += ps
+            train_soft += ps
         elif len(ps) > 1:
             train += ps
             train_soft += ps

@@ -54,21 +54,6 @@ known = sorted(list(p2wts.keys()))
 kt2i = {}
 for i, p in enumerate(known): kt2i[p] = i
 
-#
-# p2wts_soft = {}
-# for p, w in tagged.items():
-#     if w != new_whale:  # Use only identified whales
-#         if p in train_soft_set:
-#             if p not in p2wts_soft:
-#                 p2wts_soft[p] = []
-#             if w not in p2wts_soft[p]:
-#                 p2wts_soft[p].append(w)
-# known_soft = sorted(list(p2wts_soft.keys()))
-#
-# # Dictionary of picture indices
-# kt2i_soft = {}
-# for i, p in enumerate(known_soft): kt2i_soft[p] = i
-
 
 class TestingData(Sequence):
     def __init__(self, batch_size=64):

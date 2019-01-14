@@ -94,7 +94,7 @@ class TestingData(Sequence):
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
         d = np.zeros((size,) + img_shape, dtype=K.floatx())
-        e = np.zeros((size, 5004), dtype=np.int8)
+        e = np.zeros((size, 5004), dtype=K.floatx())
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_validation(self.match[j][0], p2size, p2bb)
@@ -168,7 +168,7 @@ class TrainingData(Sequence):
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
         d = np.zeros((size,) + img_shape, dtype=K.floatx())
-        e = np.zeros((size, 5004), dtype=np.int8)
+        e = np.zeros((size, 5004), dtype=K.floatx())
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_training(self.match[j][0], p2size, p2bb)

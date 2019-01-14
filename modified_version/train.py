@@ -21,7 +21,7 @@ parser.add_argument('--reg', type=float, help='regularization rate---default: 0.
 parser.add_argument('--noise', type=float, help='random noise to decide the difficult level of the trainning pairs---default: 1.0', default=1.0)
 args = parser.parse_args(sys.argv[1:])
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '2,3'
+os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
 tagged, submit, join = get_alldata()
 
@@ -71,7 +71,7 @@ for i, p in enumerate(known): kt2i[p] = i
 
 
 class TestingData(Sequence):
-    def __init__(self, batch_size=128):
+    def __init__(self, batch_size=64):
         super(TestingData, self).__init__()
         np.random.seed(10)
         self.score = -1 * np.random.random_sample(size=(len(test), len(test)))
@@ -141,7 +141,7 @@ class TestingData(Sequence):
 
 
 class TrainingData(Sequence):
-    def __init__(self, score, train_soft, steps=1000, batch_size=128):
+    def __init__(self, score, train_soft, steps=1000, batch_size=64):
         """
         @param score the cost matrix for the picture matching
         @param steps the number of epoch we are planning with this score matrix
@@ -356,7 +356,7 @@ def make_steps(step, ampl):
 
     # Train the model for 'step' epochs
     history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, steps=step, batch_size=128),
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, steps=step, batch_size=64),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
     steps += step

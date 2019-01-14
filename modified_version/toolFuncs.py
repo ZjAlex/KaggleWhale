@@ -188,8 +188,8 @@ def split_train_test(w2ps):
     np.random.seed(None)
     train_set = set(train)
     test_set = set(test)
-    random.shuffle(train)
-    random.shuffle(train_soft)
+    np.random.shuffle(train)
+    np.random.shuffle(train_soft)
 
     w2ts = {}  # Associate the image ids from train to each whale id.
     for w, ps in w2ps.items():

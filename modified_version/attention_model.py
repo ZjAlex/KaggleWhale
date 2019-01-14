@@ -126,7 +126,11 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     x = head_model([xa, xb])
     y_softmax = soft_model(xc)
     model = Model([img_a, img_b, img_c], [x, y_softmax])
-    model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy'], metrics=['acc'],
+    model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy'], metrics=['acc', test_acu],
                   loss_weights=[1, 0.5])
     return model, branch_model, head_model
 
+
+def test_acu(y_true, y_pre):
+    print(K.eval(y_pre))
+    return 0

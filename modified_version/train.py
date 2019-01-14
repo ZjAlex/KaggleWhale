@@ -309,8 +309,8 @@ def make_steps(step, ampl):
     @param ampl the K, the randomized component of the score matrix.
     """
     global w2ts, t2i, steps, features, score, histories
-
-    random.shuffle(train)
+    np.random.seed(None)
+    np.random.shuffle(train)
 
     if steps == -1:
         p2wts = {}
@@ -337,7 +337,7 @@ def make_steps(step, ampl):
         print("计算结束")
         score_val = score_reshape(score_val, fknown, fsubmit)
         predictions = val_score(test, 0.90, known, p2wts, score_val)
-        labels = [tagged[p] for p in test]
+        labels = [tagged[p_] for p_ in test]
 
         print('cv score: ' + str(map_per_set(labels, predictions)))
 

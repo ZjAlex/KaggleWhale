@@ -356,7 +356,7 @@ def make_steps(step, ampl):
 
     # Train the model for 'step' epochs
     history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, steps=step, batch_size=256),
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, steps=step, batch_size=128),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
     steps += step
@@ -373,8 +373,8 @@ histories = []
 steps = 0
 
 if True:
-    if os.path.isfile('/home/zhangjie/KaggleWhale/attention_'+args.input_path+'_model_weights.h5'):
-        model.load_weights('/home/zhangjie/KaggleWhale/attention_'+args.input_path+'_model_weights.h5',
+    if os.path.isfile('/home/zhangjie/KWhaleData/attention_'+args.input_path+'_model_weights.h5'):
+        model.load_weights('/home/zhangjie/KWhaleData/attention_'+args.input_path+'_model_weights.h5',
                            by_name=True, skip_mismatch=True, reshape=True)
     print('training')
     if args.stage == 'train':
@@ -415,7 +415,7 @@ if True:
         # set_lr(model, args.lr)
         # for _ in range(args.epochs):
         #     make_steps(args.steps, args.noise)
-        model.save_weights('attention_'+args.output_path+'_model_weights.h5')
+        model.save_weights('/home/zhangjie/KWhaleData/attention_'+args.output_path+'_model_weights.h5')
 
 
 def prepare_submission(threshold, filename):

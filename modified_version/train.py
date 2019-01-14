@@ -37,7 +37,7 @@ train, test, train_set, test_set, w2ts, w2vs, t2i, v2i, train_soft = split_train
 
 w2ts_soft, w2idx, train_soft_set = get_w2idx(train_soft, w2ps)
 
-model, branch_model, head_model = build_model(args.lr, args.reg)
+model, branch_model, head_model, _ = build_model(args.lr, args.reg)
 new_whale = 'new_whale'
 
 p2wts = {}
@@ -53,21 +53,6 @@ known = sorted(list(p2wts.keys()))
 # Dictionary of picture indices
 kt2i = {}
 for i, p in enumerate(known): kt2i[p] = i
-
-#
-# p2wts_soft = {}
-# for p, w in tagged.items():
-#     if w != new_whale:  # Use only identified whales
-#         if p in train_soft_set:
-#             if p not in p2wts_soft:
-#                 p2wts_soft[p] = []
-#             if w not in p2wts_soft[p]:
-#                 p2wts_soft[p].append(w)
-# known_soft = sorted(list(p2wts_soft.keys()))
-#
-# # Dictionary of picture indices
-# kt2i_soft = {}
-# for i, p in enumerate(known_soft): kt2i_soft[p] = i
 
 
 class TestingData(Sequence):
@@ -141,7 +126,7 @@ class TestingData(Sequence):
 
 
 class TrainingData(Sequence):
-    def __init__(self, score, train_soft, steps=1000, batch_size=64):
+    def __init__(self, score, train_soft, join, steps=1000, batch_size=64):
         """
         @param score the cost matrix for the picture matching
         @param steps the number of epoch we are planning with this score matrix
@@ -151,6 +136,7 @@ class TrainingData(Sequence):
         self.steps = steps
         self.batch_size = batch_size
         self.train_soft = train_soft
+        self.join = join
         for ts in w2ts.values():
             idxs = [t2i[t] for t in ts]
             for i in idxs:
@@ -167,8 +153,9 @@ class TrainingData(Sequence):
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
-        d = np.zeros((size,) + img_shape, dtype=K.floatx())
-        e = np.zeros((size, 5004), dtype=K.floatx())
+        d = np.zeros((size,) + img_shape, dtype=K.floatx())  # softmax loss x
+        e = np.zeros((size, 5004), dtype=K.floatx())         # softmax loss y
+        f = np.zeros((size,) + img_shape, dtype=K.floatx())  # decoder x, y
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_training(self.match[j][0], p2size, p2bb)
@@ -181,13 +168,16 @@ class TrainingData(Sequence):
         for i in range(size):
             d[i, :, :, :] = read_for_training(self.train_soft[(start + i) % len(self.train_soft)], p2size, p2bb)
             e[i, w2idx[p2ws[self.train_soft[(start + i) % len(self.train_soft)]][0]]] = 1
-        return [a, b, d], [c, e]
+        for i in range(size):
+            f[i, :, :, :] = read_for_training(self.join[(start + i) % len(self.join)], p2size, p2bb)
+        return [a, b, d, f], [c, e, f]
 
     def on_epoch_end(self):
         if self.steps <= 0:
             return  # Skip this on the last epoch.
         np.random.seed(None)
         np.random.shuffle(self.train_soft)
+        np.random.shuffle(self.join)
         self.steps -= 1
         self.match = []
         self.unmatch = []

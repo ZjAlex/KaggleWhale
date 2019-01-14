@@ -4,7 +4,8 @@ from keras.engine.topology import Input
 from keras.layers import Activation, Add, BatchNormalization, Concatenate, Conv2D, Dense, Flatten, GlobalMaxPooling2D, Lambda, MaxPooling2D, Reshape,Multiply
 from keras.models import Model
 import keras.backend as K
-from keras.layers import Dropout
+from keras.layers import Dropout, UpSampling2D
+import tensorflow as tf
 
 
 def subblock(x, filter, block, num, **kwargs):
@@ -32,6 +33,44 @@ def subblock(x, filter, block, num, **kwargs):
     y = Add()([x, y])  # Add the bypass connection
     y = Activation('relu')(y)
     return y
+
+
+def decoder_model(inp):
+    kwargs = {'padding': 'same'}
+    net = Dense(4096, activation=None, name='dec_den_1')(inp)
+    net = Reshape(target_shape=(4, 4, 256), name='dec_rs_1')(net)
+
+    net = UpSampling2D(name='dec_us1')(net)
+    net = Conv2D(128, (2, 2), padding='valid', activation='relu', name='dec_conv0')(net)
+    net = Conv2D(128, (3, 3), padding='same', activation='relu', name='dec_conv1')(net)
+    for i in range(3):
+        net = subblock(net, 128, 'dec_1', i, **kwargs)
+
+    net = UpSampling2D(name='dec_us2')(net)
+    net = Conv2D(64, (3, 3), padding='same', activation='relu', name='dec_conv2')(net)
+    for i in range(3):
+        net = subblock(net, 64, 'dec_2', i, **kwargs)
+
+    net = UpSampling2D(name='dec_us3')(net)
+    net = Conv2D(32, (3, 3), padding='same', activation='relu', name='dec_conv3')(net)
+    for i in range(3):
+        net = subblock(net, 32, 'dec_3', i, **kwargs)
+
+    net = UpSampling2D(name='dec_us4')(net)
+    net = Conv2D(16, (3, 3), padding='same', activation='relu', name='dec_conv4')(net)
+    for i in range(3):
+        net = subblock(net, 16, 'dec_4', i, **kwargs)
+
+    net = UpSampling2D(name='dec_us5')(net)
+    net = Conv2D(3, (3, 3), padding='same', activation='relu', name='dec_conv5')(net)
+    for i in range(3):
+        net = subblock(net, 3, 'dec_5', i, **kwargs)
+
+    net = UpSampling2D(name='dec_us6')(net)
+    net = Conv2D(1, (3, 3), padding='same', activation='relu', name='dec_conv6')(net)
+    net = Conv2D(1, (3, 3), padding='same', activation=None, name='dec_conv7')(net)
+
+    return net
 
 
 def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
@@ -112,6 +151,14 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     x_all = Dense(512, activation='relu', kernel_regularizer=regul)(x_all)
     x_all = Dense(5004, activation='softmax')(x_all)
     soft_model = Model(x_inp_, x_all, name='soft')
+
+    ########################
+    #  Decoder
+    ########################
+    dec_inp = Input(shape=branch_model.output_shape[1:])
+    net = decoder_model(dec_inp)
+    dec_model = Model(dec_inp, net, name='decoder')
+
     ########################
     # SIAMESE NEURAL NETWORK
     ########################
@@ -119,13 +166,23 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     # and then the head model on the resulting 512-vectors.
     img_a = Input(shape=img_shape)
     img_b = Input(shape=img_shape)
-    img_c = Input(shape=img_shape)
+    img_c = Input(shape=img_shape)  # softmax
+    img_d = Input(shape=img_shape)  # decoder
     xa = branch_model(img_a)
     xb = branch_model(img_b)
-    xc = branch_model(img_c)
+    xc = branch_model(img_c)  # softmax
+    xd = branch_model(img_d)  # decoder
+
+    y_decoder = dec_model(xd)  # decoder
+
     x = head_model([xa, xb])
     y_softmax = soft_model(xc)
-    model = Model([img_a, img_b, img_c], [x, y_softmax])
-    model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy'], metrics=['acc'],
-                  loss_weights=[1, 0.5])
-    return model, branch_model, head_model
+    model = Model([img_a, img_b, img_c, img_d], [x, y_softmax, y_decoder])
+    model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy', decoder_loss], metrics=['acc'],
+                  loss_weights=[1, 0.5, 0.1])
+    return model, branch_model, head_model, dec_model
+
+
+def decoder_loss(y_true, y_pred):
+    return K.mean(K.square(y_true - y_pred))
+

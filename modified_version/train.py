@@ -80,6 +80,7 @@ class TestingData(Sequence):
         c = np.zeros((size, 1), dtype=K.floatx())
         d = np.zeros((size,) + img_shape, dtype=K.floatx())
         e = np.zeros((size, 5004), dtype=K.floatx())
+        f = np.zeros((size,) + img_shape, dtype=K.floatx())
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_validation(self.match[j][0], p2size, p2bb)
@@ -92,7 +93,9 @@ class TestingData(Sequence):
         for i in range(size):
             d[i, :, :, :] = read_for_validation(test[(start + i) % len(test)], p2size, p2bb)
             e[i, w2idx[p2ws[test[(start + i) % len(test)]][0]]] = 1
-        return [a, b, d], [c, e]
+        for i in range(size):
+            f[i, :, :, :] = read_for_training(self.join[(start + i) % len(self.join)], p2size, p2bb)
+        return [a, b, d, f], [c, e, f]
 
     def get_test_data(self):
         self.match = []
@@ -285,7 +288,7 @@ def compute_score(verbose=1):
 
 class cv_callback(Callback):
     def on_epoch_end(self, epoch, logs=None):
-        if epoch % 5 != 0:
+        if epoch % 5 != 4:
             return
         # Evaluate the model.
         print("计算fknown")
@@ -341,8 +344,8 @@ def make_steps(step, ampl):
 
         print('cv score: ' + str(map_per_set(labels, predictions)))
 
-    test_features = branch_model.predict_on_batch(FeatureGen(known)[0])
-    test_imgs = dec_model.predict_on_batch(test_features)
+    test_features = branch_model.predict(FeatureGen(known)[0])
+    test_imgs = dec_model.predict(test_features)
 
     for idx, img in enumerate(test_imgs):
         img = np.array(img).reshape((224, 224))
@@ -358,7 +361,7 @@ def make_steps(step, ampl):
     history = model.fit_generator(
         TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, join, steps=step, batch_size=32),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
-        verbose=1).history
+        verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
     steps += step
 
     # Collect history data

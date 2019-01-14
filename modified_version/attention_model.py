@@ -11,11 +11,11 @@ import tensorflow as tf
 def subblock(x, filter, block, num, **kwargs):
     #y = BatchNormalization()(x)
     y = Conv2D(filter, (1, 1), activation='relu', **kwargs)(x)  # Reduce the number of features to 'filter'
-    y = BatchNormalization()(y)
+    #y = BatchNormalization()(y)
     y = Conv2D(filter, (3, 3), activation='relu', **kwargs)(y)  # Extend the feature field
-    y = BatchNormalization()(y)
+    #y = BatchNormalization()(y)
     y = Conv2D(K.int_shape(x)[-1], (1, 1), **kwargs)(y)  # no activation # Restore the number of original features
-    y = BatchNormalization()(y)
+    #y = BatchNormalization()(y)
 
     spatial_attention = Conv2D(K.int_shape(y)[-1] // 2, kernel_size=(1, 1), strides=(1, 1), activation='relu',
                                name=block + '_' + str(num) + 'sa_conv1')(y)
@@ -86,34 +86,34 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
 
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 96x96x64
     for _ in range(2):
-        x = BatchNormalization()(x)
+        #x = BatchNormalization()(x)
         x = Conv2D(64, (3, 3), activation='relu', **kwargs)(x)
 
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 48x48x64
-    x = BatchNormalization()(x)
+    #x = BatchNormalization()(x)
     x = Conv2D(128, (1, 1), activation='relu', **kwargs)(x)  # 48x48x128
-    x = BatchNormalization()(x)
+    #x = BatchNormalization()(x)
     for i in range(4):
         x = subblock(x, 64, '1', i, **kwargs)
 
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 24x24x128
-    x = BatchNormalization()(x)
+    #x = BatchNormalization()(x)
     x = Conv2D(256, (1, 1), activation='relu', **kwargs)(x)  # 24x24x256
-    x = BatchNormalization()(x)
+    #x = BatchNormalization()(x)
     for i in range(4):
         x = subblock(x, 64, '2', i,  **kwargs)
 
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 12x12x256
-    x = BatchNormalization()(x)
+    #x = BatchNormalization()(x)
     x = Conv2D(384, (1, 1), activation='relu', **kwargs)(x)  # 12x12x384
-    x = BatchNormalization()(x)
+    #x = BatchNormalization()(x)
     for i in range(4):
         x = subblock(x, 96, '3', i,  **kwargs)
 
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)  # 6x6x384
-    x = BatchNormalization()(x)
+    #x = BatchNormalization()(x)
     x = Conv2D(512, (1, 1), activation='relu', **kwargs)(x)  # 6x6x512
-    x = BatchNormalization()(x)
+    #x = BatchNormalization()(x)
     for i in range(4):
         x = subblock(x, 128, '4', i,  **kwargs)
 

@@ -37,7 +37,7 @@ train, test, train_set, test_set, w2ts, w2vs, t2i, v2i, train_soft = split_train
 
 w2ts_soft, w2idx, train_soft_set = get_w2idx(train_soft, w2ps)
 
-model, branch_model, head_model, _ = build_model(args.lr, args.reg)
+model, branch_model, head_model, dec_model = build_model(args.lr, args.reg)
 new_whale = 'new_whale'
 
 p2wts = {}
@@ -341,12 +341,22 @@ def make_steps(step, ampl):
 
         print('cv score: ' + str(map_per_set(labels, predictions)))
 
+    test_features = branch_model.predict_on_batch(FeatureGen(known)[0])
+    test_imgs = dec_model.predict_on_batch(test_features)
+
+    for idx, img in enumerate(test_imgs):
+        img = np.array(img).reshape((224, 224))
+        img = img * 128 + 127.5
+        img = img.astype(np.uint8)
+        img = pil_image.fromarray(img)
+        img.save('/home/zhangjie/KWhaleData/'+str(idx)+'.jpg')
+
     # Compute the match score for each picture pair
     features, score = compute_score()
 
     # Train the model for 'step' epochs
     history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, join, steps=step, batch_size=64),
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, join, steps=step, batch_size=32),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1).history
     steps += step

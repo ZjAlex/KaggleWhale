@@ -346,7 +346,7 @@ def make_steps(step, ampl):
 
     # Train the model for 'step' epochs
     history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, steps=step, batch_size=64),
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, join, steps=step, batch_size=64),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1).history
     steps += step

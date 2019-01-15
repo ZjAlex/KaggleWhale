@@ -363,16 +363,7 @@ if True:
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_model_weights.h5')
         # epoch -> 200
         set_lr(model, 16e-5)
-        for _ in range(10): make_steps(5, 0.5)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_model_weights.h5')
-        # epoch -> 240
-        set_lr(model, 4e-5)
-        for _ in range(4): make_steps(5, 0.25)
-        # epoch -> 250
-        set_lr(model, 1e-5)
-        for _ in range(1): make_steps(5, 0.25)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_model_weights.h5')
-        # epoch -> 300
+        for _ in range(10): make_steps(5, 1.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_'+args.output_path+'_model_weights.h5')
 
 

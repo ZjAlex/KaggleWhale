@@ -23,8 +23,8 @@ def subblock(x, filter, block, num, **kwargs):
 
     channel_attention = GlobalAveragePooling2D(name=block + '_' + str(num) + 'ca_gmp')(y)
     channel_attention = Reshape(target_shape=(-1, K.int_shape(channel_attention)[-1]), name=block + '_' + str(num) + 'ca_reshape1')(channel_attention)
-    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='relu', name=block + '_' + str(num) + 'ca_dense1')(channel_attention)
-    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='softmax', name=block + '_' + str(num) + 'ca_dense2')(channel_attention)
+    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='sigmoid', name=block + '_' + str(num) + 'ca_dense1')(channel_attention)
+    channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='sigmoid', name=block + '_' + str(num) + 'ca_dense2')(channel_attention)
     channel_attention = Reshape(target_shape=(-1, 1, K.int_shape(channel_attention)[-1]), name=block + '_' + str(num) + 'ca_reshape2')(channel_attention)
 
     y = Multiply(name=block + '_' + str(num) + 'ml1')([y, channel_attention])

@@ -16,7 +16,7 @@ parser.add_argument('--threshold', type=float, help='threshold to decide the new
 parser.add_argument('--lr', type=float, help='learning rate----default: 1e-5', default=64e-5)
 parser.add_argument('--epochs', type=int, help='how many epochs to iterate---default: 1', default=1)
 parser.add_argument('--steps', type=int, help='how many steps one epoch---default: 5', default=5)
-parser.add_argument('--reg', type=float, help='regularization rate---default: 0.0', default=0.0001)
+parser.add_argument('--reg', type=float, help='regularization rate---default: 0.0', default=0.0002)
 parser.add_argument('--noise', type=float, help='random noise to decide the difficult level of the trainning pairs---default: 1.0', default=1.0)
 args = parser.parse_args(sys.argv[1:])
 
@@ -371,7 +371,7 @@ if True:
         # model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20epochs_model_weights.h5')
         # # epoch -> 150
         for _ in range(4): make_steps(5, 100.0)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20epochs_model_weights.h5')
+        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20v2epochs_model_weights.h5')
         for _ in range(4): make_steps(5, 100.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_40epochs_model_weights.h5')
         for _ in range(4): make_steps(5, 1.0)

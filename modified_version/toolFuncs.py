@@ -96,7 +96,7 @@ def read_raw_image(p):
 
 
 def get_w2idx(train_soft, w2ps):
-    train_soft_set = set(train_soft)
+    train_soft_set = sorted(set(train_soft))
     w2ts_soft = {}
     for w, ps in w2ps.items():
         for p in ps:
@@ -200,8 +200,8 @@ def split_train_test(w2ps):
         else:
             train_soft += ps
     np.random.seed(None)
-    train_set = set(train)
-    test_set = set(test)
+    train_set = sorted(set(train))
+    test_set = sorted(set(test))
     np.random.shuffle(train)
     np.random.shuffle(train_soft)
 

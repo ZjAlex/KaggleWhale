@@ -301,7 +301,7 @@ class cv_callback(Callback):
         score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
         print("计算结束")
         score_val = score_reshape(score_val, fknown, fsubmit)
-        predictions = val_score(test, 0.90, known, p2wts, score_val)
+        predictions = val_score(test, args.threshold, known, p2wts, score_val)
         labels = [tagged[p] for p in test]
 
         print('cv score: ' + str(map_per_set(labels, predictions)))

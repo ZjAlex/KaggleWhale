@@ -17,7 +17,7 @@ parser.add_argument('--threshold', type=float, help='threshold to decide the new
 parser.add_argument('--lr', type=float, help='learning rate----default: 1e-5', default=64e-5)
 parser.add_argument('--epochs', type=int, help='how many epochs to iterate---default: 1', default=1)
 parser.add_argument('--steps', type=int, help='how many steps one epoch---default: 5', default=5)
-parser.add_argument('--reg', type=float, help='regularization rate---default: 0.0', default=0.0)
+parser.add_argument('--reg', type=float, help='regularization rate---default: 0.0', default=0.0001)
 parser.add_argument('--noise', type=float, help='random noise to decide the difficult level of the trainning pairs---default: 1.0', default=1.0)
 args = parser.parse_args(sys.argv[1:])
 
@@ -321,7 +321,7 @@ def make_steps(step, ampl):
         img = img * 128 + 127.5
         img = img.astype(np.uint8)
         img = pil_image.fromarray(img)
-        img.save('/home/zhangjie/KWhaleData/'+str(idx)+'.jpg')
+        img.save('/home/zhangjie/KWhaleData/generated_img_'+str(idx)+'.jpg')
 
     # Compute the match score for each picture pair
     features, score = compute_score()
@@ -359,11 +359,11 @@ if True:
             ampl = max(1.0, 100 ** -0.1 * ampl)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_model_weights.h5')
         # epoch -> 150
-        for _ in range(9): make_steps(5, 1.0)
+        for _ in range(18): make_steps(5, 1.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_model_weights.h5')
         # epoch -> 200
         set_lr(model, 16e-5)
-        for _ in range(5): make_steps(5, 0.5)
+        for _ in range(10): make_steps(5, 0.5)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_model_weights.h5')
         # epoch -> 240
         set_lr(model, 4e-5)
@@ -373,25 +373,6 @@ if True:
         for _ in range(1): make_steps(5, 0.25)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_model_weights.h5')
         # epoch -> 300
-        weights = model.get_weights()
-        model, branch_model, head_model = build_model(64e-5, 0.0002)
-        model.set_weights(weights)
-        for _ in range(5): make_steps(5, 1.0)
-        # epoch -> 350
-        set_lr(model, 16e-5)
-        for _ in range(5): make_steps(5, 0.5)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_model_weights.h5')
-        # epoch -> 390
-        set_lr(model, 4e-5)
-        for _ in range(4): make_steps(5, 0.25)
-        # epoch -> 400
-        set_lr(model, 1e-5)
-        for _ in range(1): make_steps(5, 0.25)
-
-
-        # set_lr(model, args.lr)
-        # for _ in range(args.epochs):
-        #     make_steps(args.steps, args.noise)
         model.save_weights('/home/zhangjie/KWhaleData/attention_'+args.output_path+'_model_weights.h5')
 
 

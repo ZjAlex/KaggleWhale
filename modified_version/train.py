@@ -315,35 +315,6 @@ def make_steps(step, ampl):
     np.random.seed(None)
     np.random.shuffle(train)
 
-    if steps == -1:
-        p2wts = {}
-        for p, w in tagged.items():
-            if w != new_whale:  # Use only identified whales
-                if p in train_set:
-                    if p not in p2wts:
-                        p2wts[p] = []
-                    if w not in p2wts[p]:
-                        p2wts[p].append(w)
-        known = sorted(list(p2wts.keys()))
-
-        # Dictionary of picture indices
-        kt2i = {}
-        for i, p in enumerate(known): kt2i[p] = i
-
-        # Evaluate the model.
-        print("计算fknown")
-        fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
-        print("计算fsubmit")
-        fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
-        print("计算score")
-        score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
-        print("计算结束")
-        score_val = score_reshape(score_val, fknown, fsubmit)
-        predictions = val_score(test, 0.90, known, p2wts, score_val)
-        labels = [tagged[p_] for p_ in test]
-
-        print('cv score: ' + str(map_per_set(labels, predictions)))
-
     test_features = branch_model.predict(FeatureGen(known)[0])
     test_imgs = dec_model.predict(test_features)
 

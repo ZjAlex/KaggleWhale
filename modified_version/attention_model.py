@@ -1,7 +1,7 @@
 from keras import regularizers
 from keras.optimizers import Adam
 from keras.engine.topology import Input
-from keras.layers import Activation, Add, BatchNormalization, Concatenate, Conv2D, Dense, Flatten, GlobalMaxPooling2D, Lambda, MaxPooling2D, Reshape,Multiply
+from keras.layers import Activation, Add, BatchNormalization, Concatenate, Conv2D, Dense, Flatten, GlobalMaxPooling2D, GlobalAveragePooling2D, Lambda, MaxPooling2D, Reshape,Multiply
 from keras.models import Model
 import keras.backend as K
 from keras.layers import Dropout, UpSampling2D
@@ -21,7 +21,7 @@ def subblock(x, filter, block, num, **kwargs):
                                name=block + '_' + str(num) + 'sa_conv1')(y)
     spatial_attention = Conv2D(1, kernel_size=(1, 1), strides=(1, 1), activation='sigmoid', name=block + '_' + str(num) + 'sa_conv2')(spatial_attention)
 
-    channel_attention = GlobalMaxPooling2D(name=block + '_' + str(num) + 'ca_gmp')(y)
+    channel_attention = GlobalAveragePooling2D(name=block + '_' + str(num) + 'ca_gmp')(y)
     channel_attention = Reshape(target_shape=(-1, K.int_shape(channel_attention)[-1]), name=block + '_' + str(num) + 'ca_reshape1')(channel_attention)
     channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='relu', name=block + '_' + str(num) + 'ca_dense1')(channel_attention)
     channel_attention = Dense(K.int_shape(channel_attention)[-1], activation='softmax', name=block + '_' + str(num) + 'ca_dense2')(channel_attention)

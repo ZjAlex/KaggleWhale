@@ -9,12 +9,12 @@ from toolFuncs import *
 
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('--gpu', type=str, help='decide gpu---default: 2', default='2')
+parser.add_argument('--gpu', type=str, help='decide gpu---default: 2', default='3')
 parser.add_argument('--input_path', type=str, help='input path')
 parser.add_argument('--output_path', type=str, help='output path')
 parser.add_argument('--stage', type=str, help='train or test----default: train', default='train')
 parser.add_argument('--threshold', type=float, help='threshold to decide the new whale to insert---default: 0.99', default=0.99)
-parser.add_argument('--lr', type=float, help='learning rate----default: 1e-5', default=1e-5)
+parser.add_argument('--lr', type=float, help='learning rate----default: 1e-5', default=64e-5)
 parser.add_argument('--epochs', type=int, help='how many epochs to iterate---default: 1', default=1)
 parser.add_argument('--steps', type=int, help='how many steps one epoch---default: 5', default=5)
 parser.add_argument('--reg', type=float, help='regularization rate---default: 0.0', default=0.0)
@@ -93,8 +93,6 @@ class TestingData(Sequence):
         for i in range(size):
             d[i, :, :, :] = read_for_validation(test[(start + i) % len(test)], p2size, p2bb)
             e[i, w2idx[p2ws[test[(start + i) % len(test)]][0]]] = 1
-        for i in range(size):
-            f[i, :, :, :] = read_for_training(self.join[(start + i) % len(self.join)], p2size, p2bb)
         return [a, b, d, f], [c, e, f]
 
     def get_test_data(self):

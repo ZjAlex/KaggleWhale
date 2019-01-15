@@ -4,7 +4,6 @@ import sys
 from keras.callbacks import Callback
 from attention_model import build_model
 from keras.utils import Sequence
-from lap import lapjv
 from toolFuncs import *
 
 import argparse
@@ -35,6 +34,8 @@ w2ps = get_w2ps(p2ws)
 
 train, test, train_set, test_set, w2ts, w2vs, t2i, v2i, train_soft = split_train_test(w2ps)
 
+match_test, unmatch_test = get_random_test_data(test, w2vs, v2i)
+
 w2ts_soft, w2idx, train_soft_set = get_w2idx(train_soft, w2ps)
 
 model, branch_model, head_model, dec_model = build_model(args.lr, args.reg)
@@ -58,17 +59,20 @@ for i, p in enumerate(known): kt2i[p] = i
 class TestingData(Sequence):
     def __init__(self, batch_size=64):
         super(TestingData, self).__init__()
-        np.random.seed(10)
-        self.score = -1 * np.random.random_sample(size=(len(test), len(test)))
-        np.random.seed(None)
         self.batch_size = batch_size
-        for vs in w2vs.values():
-            idxs = [v2i[v] for v in vs]
-            for i in idxs:
-                for j in idxs:
-                    self.score[
-                        i, j] = 10000.0  # Set a large value for matching whales -- eliminates this potential pairing
-        self.get_test_data()
+        self.match = match_test
+        self.unmatch = unmatch_test
+        # np.random.seed(10)
+        # self.score = -1 * np.random.random_sample(size=(len(test), len(test)))
+        # np.random.seed(None)
+        # self.batch_size = batch_size
+        # for vs in w2vs.values():
+        #     idxs = [v2i[v] for v in vs]
+        #     for i in idxs:
+        #         for j in idxs:
+        #             self.score[
+        #                 i, j] = 10000.0  # Set a large value for matching whales -- eliminates this potential pairing
+        # self.get_test_data()
 
     def __getitem__(self, index):
         start = self.batch_size * index
@@ -95,32 +99,32 @@ class TestingData(Sequence):
             e[i, w2idx[p2ws[test[(start + i) % len(test)]][0]]] = 1
         return [a, b, d, f], [c, e, f]
 
-    def get_test_data(self):
-        self.match = []
-        self.unmatch = []
-        _, _, x = lapjv(self.score)  # Solve the linear assignment problem
-        y = np.arange(len(x), dtype=np.int32)
-
-        # Compute a derangement for matching whales
-        for vs in w2vs.values():
-            d = vs.copy()
-            while True:
-                random.shuffle(d)
-                if not np.any(vs == d): break
-            for ab in zip(vs, d): self.match.append(ab)
-
-        # Construct unmatched whale pairs from the LAP solution.
-        for i, j in zip(x, y):
-            if i == j:
-                print(self.score)
-                print(x)
-                print(y)
-                print(i, j)
-            assert i != j
-            self.unmatch.append((test[i], test[j]))
-
-        # print(len(self.match), len(train), len(self.unmatch), len(train))
-        assert len(self.match) == len(test) and len(self.unmatch) == len(test)
+    # def get_test_data(self):
+    #     self.match = []
+    #     self.unmatch = []
+    #     _, _, x = lapjv(self.score)  # Solve the linear assignment problem
+    #     y = np.arange(len(x), dtype=np.int32)
+    #
+    #     # Compute a derangement for matching whales
+    #     for vs in w2vs.values():
+    #         d = vs.copy()
+    #         while True:
+    #             random.shuffle(d)
+    #             if not np.any(vs == d): break
+    #         for ab in zip(vs, d): self.match.append(ab)
+    #
+    #     # Construct unmatched whale pairs from the LAP solution.
+    #     for i, j in zip(x, y):
+    #         if i == j:
+    #             print(self.score)
+    #             print(x)
+    #             print(y)
+    #             print(i, j)
+    #         assert i != j
+    #         self.unmatch.append((test[i], test[j]))
+    #
+    #     # print(len(self.match), len(train), len(self.unmatch), len(train))
+    #     assert len(self.match) == len(test) and len(self.unmatch) == len(test)
 
     def __len__(self):
         return (len(self.match) + len(self.unmatch) + self.batch_size - 1) // self.batch_size

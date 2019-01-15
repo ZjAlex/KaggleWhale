@@ -8,6 +8,7 @@ from keras import backend as K
 from pandas import read_csv
 from tqdm import tqdm
 from keras.preprocessing.image import apply_affine_transform
+from lap import lapjv
 
 
 TRAIN_DF = '/home/zhangjie/KWhaleData/train.csv'
@@ -298,3 +299,40 @@ def val_score(test, threshold, known, p2ws, score_val):
         predictions.append(t[:5])
     return predictions
 
+def get_random_test_data(test, w2vs, v2i):
+    np.random.seed(10)
+    score = -1 * np.random.random_sample(size=(len(test), len(test)))
+    np.random.seed(None)
+    for vs in w2vs.values():
+        idxs = [v2i[v] for v in vs]
+        for i in idxs:
+            for j in idxs:
+                score[i, j] = 10000.0
+    match = []
+    unmatch = []
+    _, _, x = lapjv(score)  # Solve the linear assignment problem
+    y = np.arange(len(x), dtype=np.int32)
+
+    # Compute a derangement for matching whales
+    for vs in w2vs.values():
+        d = vs.copy()
+        while True:
+            random.shuffle(d)
+            if not np.any(vs == d):
+                break
+        for ab in zip(vs, d):
+            match.append(ab)
+
+    # Construct unmatched whale pairs from the LAP solution.
+    for i, j in zip(x, y):
+        if i == j:
+            print(score)
+            print(x)
+            print(y)
+            print(i, j)
+        assert i != j
+        unmatch.append((test[i], test[j]))
+
+    # print(len(self.match), len(train), len(self.unmatch), len(train))
+    assert len(match) == len(test) and len(unmatch) == len(test)
+    return match, unmatch

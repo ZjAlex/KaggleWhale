@@ -360,22 +360,34 @@ if True:
                            by_name=True, skip_mismatch=True, reshape=True)
     print('training')
     if args.stage == 'train':
-        # epoch -> 10
-        make_steps(10, 1000)
-        ampl = 100.0
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_10epochs_model_weights.h5')
-        for _ in range(2):
-            print('noise ampl.  = ', ampl)
-            make_steps(5, ampl)
-            ampl = max(1.0, 100 ** -0.1 * ampl)
+        # # epoch -> 10
+        # make_steps(10, 1000)
+        # ampl = 100.0
+        # model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_10epochs_model_weights.h5')
+        # for _ in range(2):
+        #     print('noise ampl.  = ', ampl)
+        #     make_steps(5, ampl)
+        #     ampl = max(1.0, 100 ** -0.1 * ampl)
+        # model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20epochs_model_weights.h5')
+        # # epoch -> 150
+        for _ in range(4): make_steps(5, 100.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20epochs_model_weights.h5')
-        # epoch -> 150
-        for _ in range(18): make_steps(5, 1.0)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_110epochs_model_weights.h5')
-        # epoch -> 200
+        for _ in range(4): make_steps(5, 100.0)
+        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_40epochs_model_weights.h5')
+        for _ in range(4): make_steps(5, 1.0)
+        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_60epochs_model_weights.h5')
+        for _ in range(4): make_steps(5, 1.0)
+        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_80epochs_model_weights.h5')
         set_lr(model, 16e-5)
-        for _ in range(10): make_steps(5, 1.0)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_'+args.output_path+'_160epochs_model_weights.h5')
+        for _ in range(4): make_steps(5, 0.75)
+        model.save_weights('/home/zhangjie/KWhaleData/attention_'+args.output_path+'_100epochs_model_weights.h5')
+        for _ in range(4): make_steps(5, 0.75)
+        model.save_weights('/home/zhangjie/KWhaleData/attention_'+args.output_path+'_120epochs_model_weights.h5')
+        set_lr(model, 4e-5)
+        for _ in range(4): make_steps(5, 0.5)
+        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_140epochs_model_weights.h5')
+        for _ in range(4): make_steps(5, 0.5)
+        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_160epochs_model_weights.h5')
 
 
 def prepare_submission(threshold, filename):

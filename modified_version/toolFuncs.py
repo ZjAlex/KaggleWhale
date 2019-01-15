@@ -68,6 +68,17 @@ def get_p2ws(tagged):
     return p2ws
 
 
+def get_new_whale(tagged):
+    new_whales = []
+    for p, w in tagged.items():
+        if w == 'new_whale':
+            new_whales.append(p)
+    np.random.seed(44)
+    np.random.shuffle(new_whales)
+    np.random.seed(None)
+    return new_whales
+
+
 def get_w2ps(p2ws):
     w2ps = {}
     for p, ws in p2ws.items():
@@ -268,7 +279,7 @@ def val_score(test, threshold, known, p2ws, score_val):
     vhigh = 0
     pos = [0, 0, 0, 0, 0, 0]
     predictions = []
-    for i, p in enumerate(tqdm(test)):
+    for i, p_ in enumerate(tqdm(test)):
         t = []
         s = set()
         a = score_val[i, :]

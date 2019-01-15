@@ -30,6 +30,8 @@ p2bb = get_p2bb()
 
 p2ws = get_p2ws(tagged)
 
+new_whales = get_new_whale(tagged)
+
 w2ps = get_w2ps(p2ws)
 
 train, test, train_set, test_set, w2ts, w2vs, t2i, v2i, train_soft = split_train_test(w2ps)
@@ -292,17 +294,21 @@ class cv_callback(Callback):
     def on_epoch_end(self, epoch, logs=None):
         if epoch % 5 != 4:
             return
+
+        cv_test = test + new_whales[:len(test)]
         # Evaluate the model.
         print("计算fknown")
         fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
         print("计算fsubmit")
-        fsubmit = branch_model.predict_generator(FeatureGen(test), max_queue_size=20, workers=10, verbose=0)
+        fsubmit = branch_model.predict_generator(FeatureGen(cv_test), max_queue_size=20, workers=10, verbose=0)
         print("计算score")
         score_val = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
         print("计算结束")
         score_val = score_reshape(score_val, fknown, fsubmit)
-        predictions = val_score(test, args.threshold, known, p2wts, score_val)
+        predictions = val_score(cv_test, args.threshold, known, p2wts, score_val)
         labels = [tagged[p] for p in test]
+        labels_newwhale = ['new_whale' for p in new_whales[:len(test)]]
+        labels = labels + labels_newwhale
 
         print('cv score: ' + str(map_per_set(labels, predictions)))
 

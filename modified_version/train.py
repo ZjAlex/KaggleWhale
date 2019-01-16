@@ -475,6 +475,6 @@ else:
     # Evaluate the model.
     fsubmit = branch_model.predict_generator(FeatureGen(submit), max_queue_size=20, workers=10, verbose=0)
     sm_submit = soft_model.predict(fsubmit, batch_size=128)
-    prepare_submission_softmax(0.90, 'submission.csv')
+    prepare_submission_softmax(args.threshold, 'submission.csv')
 toc = time.time()
 print("Submission time: ", (toc - tic) / 60.)

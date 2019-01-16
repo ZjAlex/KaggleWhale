@@ -112,7 +112,11 @@ def get_w2idx(train_soft, w2ps):
     for idx, w in enumerate(w2ts_soft.keys()):
         if w not in w2idx:
             w2idx[w] = idx
-    return w2ts_soft, w2idx, train_soft_set
+
+    idx2w = {}
+    for w, idx in w2idx.items():
+        idx2w[idx] = w
+    return w2ts_soft, w2idx, train_soft_set, idx2w
 
 
 

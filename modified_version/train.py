@@ -18,6 +18,7 @@ parser.add_argument('--epochs', type=int, help='how many epochs to iterate---def
 parser.add_argument('--steps', type=int, help='how many steps one epoch---default: 5', default=5)
 parser.add_argument('--reg', type=float, help='regularization rate---default: 0.0', default=0.0002)
 parser.add_argument('--noise', type=float, help='random noise to decide the difficult level of the trainning pairs---default: 1.0', default=1.0)
+parser.add_argument('--submit', type=str, help='submit method', default='first')
 args = parser.parse_args(sys.argv[1:])
 
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -38,9 +39,9 @@ train, test, train_set, test_set, w2ts, w2vs, t2i, v2i, train_soft = split_train
 
 match_test, unmatch_test = get_random_test_data(test, w2vs, v2i)
 
-w2ts_soft, w2idx, train_soft_set = get_w2idx(train_soft, w2ps)
+w2ts_soft, w2idx, train_soft_set, idx2w = get_w2idx(train_soft, w2ps)
 
-model, branch_model, head_model, dec_model = build_model(args.lr, args.reg)
+model, branch_model, head_model, dec_model, soft_model = build_model(args.lr, args.reg)
 new_whale = 'new_whale'
 
 p2wts = {}
@@ -370,13 +371,15 @@ if True:
         #     ampl = max(1.0, 100 ** -0.1 * ampl)
         # model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20epochs_model_weights.h5')
         # # epoch -> 150
+        set_lr(model, 16e-5)
         for _ in range(4): make_steps(5, 100.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20v2epochs_model_weights.h5')
         for _ in range(4): make_steps(5, 100.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_40epochs_model_weights.h5')
-        for _ in range(4): make_steps(5, 1.0)
+        set_lr(model, 4e-5)
+        for _ in range(4): make_steps(5, 50.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_60epochs_model_weights.h5')
-        for _ in range(4): make_steps(5, 1.0)
+        for _ in range(4): make_steps(5, 50.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_80epochs_model_weights.h5')
         set_lr(model, 16e-5)
         for _ in range(4): make_steps(5, 0.75)
@@ -429,15 +432,49 @@ def prepare_submission(threshold, filename):
     return vtop, vhigh, pos
 
 
+def prepare_submission_softmax(threshold, filename):
+    """
+    Generate a Kaggle submission file.
+    @param threshold the score given to 'new_whale'
+    @param filename the submission file name
+    """
+    vtop = 0
+    vhigh = 0
+    pos = [0, 0, 0, 0, 0, 0]
+    with open(filename, 'wt', newline='\n') as f:
+        f.write('Image,Id\n')
+        for i, p in enumerate(tqdm(submit)):
+            t = []
+            s = set()
+            a = sm_submit[i, :]
+            for j in list(reversed(np.argsort(a))):
+                if a[j] < threshold and new_whale not in s:
+                    pos[len(t)] += 1
+                    s.add(new_whale)
+                    t.append(new_whale)
+                    if len(t) == 5: break;
+                s.add(idx2w[j])
+                t.append(idx2w[j])
+                if len(t) == 5: break;
+            if new_whale not in s: pos[5] += 1
+            assert len(t) == 5 and len(s) == 5
+            f.write(p + ',' + ' '.join(t[:5]) + '\n')
+    return vtop, vhigh, pos
+
+
 tic = time.time()
 
-# Evaluate the model.
-fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
-fsubmit = branch_model.predict_generator(FeatureGen(submit), max_queue_size=20, workers=10, verbose=0)
-score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
-score = score_reshape(score, fknown, fsubmit)
-
-# Generate the subsmission file.
-prepare_submission(args.threshold, 'submission.csv')
+if args.submit == 'first':
+    # Evaluate the model.
+    fknown = branch_model.predict_generator(FeatureGen(known), max_queue_size=20, workers=10, verbose=0)
+    fsubmit = branch_model.predict_generator(FeatureGen(submit), max_queue_size=20, workers=10, verbose=0)
+    score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
+    score = score_reshape(score, fknown, fsubmit)
+    prepare_submission(args.threshold, 'submission.csv')
+else:
+    # Evaluate the model.
+    fsubmit = branch_model.predict_generator(FeatureGen(submit), max_queue_size=20, workers=10, verbose=0)
+    sm_submit = soft_model.predict(fsubmit, batch_size=128)
+    prepare_submission_softmax(0.90, 'submission.csv')
 toc = time.time()
 print("Submission time: ", (toc - tic) / 60.)

@@ -41,7 +41,7 @@ match_test, unmatch_test = get_random_test_data(test, w2vs, v2i)
 
 w2ts_soft, w2idx, train_soft_set, idx2w = get_w2idx(train_soft, w2ps)
 
-model, branch_model, head_model, dec_model, soft_model = build_model(args.lr, args.reg)
+model, branch_model, head_model, dec_model, soft_model, model1 = build_model(args.lr, args.reg)
 new_whale = 'new_whale'
 
 p2wts = {}
@@ -97,10 +97,10 @@ class TestingData(Sequence):
             b[i + 1, :, :, :] = read_for_validation(self.unmatch[j][1], p2size, p2bb)
             c[i + 1, 0] = 0  # Different whales
             j += 1
-        for i in range(size):
-            d[i, :, :, :] = read_for_validation(test[(start + i) % len(test)], p2size, p2bb)
-            e[i, w2idx[p2ws[test[(start + i) % len(test)]][0]]] = 1
-        return [a, b, d, f], [c, e, f]
+        # for i in range(size):
+        #     d[i, :, :, :] = read_for_validation(test[(start + i) % len(test)], p2size, p2bb)
+        #     e[i, w2idx[p2ws[test[(start + i) % len(test)]][0]]] = 1
+        return [a, b], c
 
     # def get_test_data(self):
     #     self.match = []
@@ -173,12 +173,12 @@ class TrainingData(Sequence):
             b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1], p2size, p2bb)
             c[i + 1, 0] = 0  # Different whales
             j += 1
-        for i in range(size):
-            d[i, :, :, :] = read_for_training(self.train_soft[(start + i) % len(self.train_soft)], p2size, p2bb)
-            e[i, w2idx[p2ws[self.train_soft[(start + i) % len(self.train_soft)]][0]]] = 1
-        for i in range(size):
-            f[i, :, :, :] = read_for_training(self.join[(start + i) % len(self.join)], p2size, p2bb)
-        return [a, b, d, f], [c, e, f]
+        # for i in range(size):
+        #     d[i, :, :, :] = read_for_training(self.train_soft[(start + i) % len(self.train_soft)], p2size, p2bb)
+        #     e[i, w2idx[p2ws[self.train_soft[(start + i) % len(self.train_soft)]][0]]] = 1
+        # for i in range(size):
+        #     f[i, :, :, :] = read_for_training(self.join[(start + i) % len(self.join)], p2size, p2bb)
+        return [a, b], c
 
     def on_epoch_end(self):
         if self.steps <= 0:
@@ -338,7 +338,7 @@ def make_steps(step, ampl):
     features, score = compute_score()
 
     # Train the model for 'step' epochs
-    history = model.fit_generator(
+    history = model1.fit_generator(
         TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, join, steps=step, batch_size=32),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
@@ -371,12 +371,12 @@ if True:
         #     ampl = max(1.0, 100 ** -0.1 * ampl)
         # model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20epochs_model_weights.h5')
         # # epoch -> 150
-        set_lr(model, 8e-5)
+        set_lr(model1, 8e-5)
         for _ in range(4): make_steps(5, 50.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20v2epochs_model_weights.h5')
         for _ in range(4): make_steps(5, 50.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_40epochs_model_weights.h5')
-        set_lr(model, 4e-5)
+        set_lr(model1, 4e-5)
         for _ in range(4): make_steps(5, 20.0)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_60epochs_model_weights.h5')
         for _ in range(4): make_steps(5, 20.0)

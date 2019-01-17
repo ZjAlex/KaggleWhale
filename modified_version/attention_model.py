@@ -180,7 +180,9 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     model = Model([img_a, img_b, img_c, img_d], [x, y_softmax, y_decoder])
     model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy', decoder_loss], metrics=['acc'],
                   loss_weights=[1, 1, 0.5])
-    return model, branch_model, head_model, dec_model, soft_model
+    model1 = Model([img_a, img_b], x)
+    model1.compile(optim, loss='binary_crossentropy', metrics=['acc'])
+    return model, branch_model, head_model, dec_model, soft_model, model1
 
 
 def decoder_loss(y_true, y_pred):

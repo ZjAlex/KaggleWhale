@@ -178,8 +178,7 @@ def build_model(lr, l2, img_shape=(384, 384, 3), activation='sigmoid'):
     x = head_model([xa, xb])
     #y_softmax = soft_model(xc)
     model = Model([img_a, img_b], [x])
-    model.compile(optim, loss='binary_crossentropy', metrics=['acc'],
-                  loss_weights=[1, 0.0, 0.0])
+    model.compile(optim, loss='binary_crossentropy', metrics=['acc'])
     return model, branch_model, head_model
 
 

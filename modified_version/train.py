@@ -60,7 +60,7 @@ for i, p in enumerate(known): kt2i[p] = i
 
 
 class TestingData(Sequence):
-    def __init__(self, batch_size=64):
+    def __init__(self, batch_size=32):
         super(TestingData, self).__init__()
         self.batch_size = batch_size
         self.match = match_test
@@ -339,7 +339,7 @@ def make_steps(step, ampl):
 
     # Train the model for 'step' epochs
     history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, join, steps=step, batch_size=64),
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, join, steps=step, batch_size=32),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
     steps += step

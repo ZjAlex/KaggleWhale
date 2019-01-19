@@ -9,7 +9,7 @@ import tensorflow as tf
 
 
 def subblock(x, filter, block, num, **kwargs):
-    #y = BatchNormalization()(x)
+
     y = Conv2D(filter, (1, 1), activation='relu', **kwargs)(x)  # Reduce the number of features to 'filter'
     y = BatchNormalization()(y)
     y = Conv2D(filter, (3, 3), activation='relu', **kwargs)(y)  # Extend the feature field
@@ -73,7 +73,7 @@ def decoder_model(inp):
     return net
 
 
-def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
+def build_model(lr, l2, img_shape=(384, 384, 3), activation='sigmoid'):
     ##############
     # BRANCH MODEL
     ##############
@@ -144,20 +144,20 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     x = Dense(1, use_bias=True, activation=activation, name='weighted-average')(x)
     head_model = Model([xa_inp, xb_inp], x, name='head')
 
-    x_inp_ = Input(shape=branch_model.output_shape[1:])
-    x_all = Dropout(0.5)(x_inp_)
-    x_all = Dense(512, activation='relu', kernel_regularizer=regul)(x_all)
-    x_all = Dropout(0.5)(x_all)
-    x_all = Dense(512, activation='relu', kernel_regularizer=regul)(x_all)
-    x_all = Dense(5004, activation='softmax')(x_all)
-    soft_model = Model(x_inp_, x_all, name='soft')
+    # x_inp_ = Input(shape=branch_model.output_shape[1:])
+    # x_all = Dropout(0.5)(x_inp_)
+    # x_all = Dense(512, activation='relu', kernel_regularizer=regul)(x_all)
+    # x_all = Dropout(0.5)(x_all)
+    # x_all = Dense(512, activation='relu', kernel_regularizer=regul)(x_all)
+    # x_all = Dense(5004, activation='softmax')(x_all)
+    # soft_model = Model(x_inp_, x_all, name='soft')
 
     ########################
     #  Decoder
     ########################
-    dec_inp = Input(shape=branch_model.output_shape[1:])
-    net = decoder_model(dec_inp)
-    dec_model = Model(dec_inp, net, name='decoder')
+    # dec_inp = Input(shape=branch_model.output_shape[1:])
+    # net = decoder_model(dec_inp)
+    # dec_model = Model(dec_inp, net, name='decoder')
 
     ########################
     # SIAMESE NEURAL NETWORK
@@ -166,21 +166,21 @@ def build_model(lr, l2, img_shape=(224, 224, 1), activation='sigmoid'):
     # and then the head model on the resulting 512-vectors.
     img_a = Input(shape=img_shape)
     img_b = Input(shape=img_shape)
-    img_c = Input(shape=img_shape)  # softmax
-    img_d = Input(shape=img_shape)  # decoder
+    #img_c = Input(shape=img_shape)  # softmax
+    #img_d = Input(shape=img_shape)  # decoder
     xa = branch_model(img_a)
     xb = branch_model(img_b)
-    xc = branch_model(img_c)  # softmax
-    xd = branch_model(img_d)  # decoder
+    #xc = branch_model(img_c)  # softmax
+    #xd = branch_model(img_d)  # decoder
 
-    y_decoder = dec_model(xd)  # decoder
+    #y_decoder = dec_model(xd)  # decoder
 
     x = head_model([xa, xb])
-    y_softmax = soft_model(xc)
-    model = Model([img_a, img_b, img_c, img_d], [x, y_softmax, y_decoder])
-    model.compile(optim, loss=['binary_crossentropy', 'categorical_crossentropy', decoder_loss], metrics=['acc'],
+    #y_softmax = soft_model(xc)
+    model = Model([img_a, img_b], [x])
+    model.compile(optim, loss='binary_crossentropy', metrics=['acc'],
                   loss_weights=[1, 0.0, 0.0])
-    return model, branch_model, head_model, dec_model, soft_model
+    return model, branch_model, head_model
 
 
 def decoder_loss(y_true, y_pred):

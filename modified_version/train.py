@@ -85,9 +85,9 @@ class TestingData(Sequence):
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
-        d = np.zeros((size,) + img_shape, dtype=K.floatx())
-        e = np.zeros((size, 5004), dtype=K.floatx())
-        f = np.zeros((size,) + img_shape, dtype=K.floatx())
+        # d = np.zeros((size,) + img_shape, dtype=K.floatx())
+        # e = np.zeros((size, 5004), dtype=K.floatx())
+        # f = np.zeros((size,) + img_shape, dtype=K.floatx())
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_validation(self.match[j][0], p2size, p2bb)
@@ -97,10 +97,10 @@ class TestingData(Sequence):
             b[i + 1, :, :, :] = read_for_validation(self.unmatch[j][1], p2size, p2bb)
             c[i + 1, 0] = 0  # Different whales
             j += 1
-        for i in range(size):
-            d[i, :, :, :] = read_for_validation(test[(start + i) % len(test)], p2size, p2bb)
-            e[i, w2idx[p2ws[test[(start + i) % len(test)]][0]]] = 1
-        return [a, b, d, f], [c, e, f]
+        # for i in range(size):
+        #     d[i, :, :, :] = read_for_validation(test[(start + i) % len(test)], p2size, p2bb)
+        #     e[i, w2idx[p2ws[test[(start + i) % len(test)]][0]]] = 1
+        return [a, b], c
 
     # def get_test_data(self):
     #     self.match = []
@@ -161,9 +161,9 @@ class TrainingData(Sequence):
         a = np.zeros((size,) + img_shape, dtype=K.floatx())
         b = np.zeros((size,) + img_shape, dtype=K.floatx())
         c = np.zeros((size, 1), dtype=K.floatx())
-        d = np.zeros((size,) + img_shape, dtype=K.floatx())  # softmax loss x
-        e = np.zeros((size, 5004), dtype=K.floatx())         # softmax loss y
-        f = np.zeros((size,) + img_shape, dtype=K.floatx())  # decoder x, y
+        # d = np.zeros((size,) + img_shape, dtype=K.floatx())  # softmax loss x
+        # e = np.zeros((size, 5004), dtype=K.floatx())         # softmax loss y
+        # f = np.zeros((size,) + img_shape, dtype=K.floatx())  # decoder x, y
         j = start // 2
         for i in range(0, size, 2):
             a[i, :, :, :] = read_for_training(self.match[j][0], p2size, p2bb)
@@ -173,19 +173,19 @@ class TrainingData(Sequence):
             b[i + 1, :, :, :] = read_for_training(self.unmatch[j][1], p2size, p2bb)
             c[i + 1, 0] = 0  # Different whales
             j += 1
-        for i in range(size):
-            d[i, :, :, :] = read_for_training(self.train_soft[(start + i) % len(self.train_soft)], p2size, p2bb)
-            e[i, w2idx[p2ws[self.train_soft[(start + i) % len(self.train_soft)]][0]]] = 1
-        for i in range(size):
-            f[i, :, :, :] = read_for_training(self.join[(start + i) % len(self.join)], p2size, p2bb)
-        return [a, b, d, f], [c, e, f]
+        # for i in range(size):
+        #     d[i, :, :, :] = read_for_training(self.train_soft[(start + i) % len(self.train_soft)], p2size, p2bb)
+        #     e[i, w2idx[p2ws[self.train_soft[(start + i) % len(self.train_soft)]][0]]] = 1
+        # for i in range(size):
+        #     f[i, :, :, :] = read_for_training(self.join[(start + i) % len(self.join)], p2size, p2bb)
+        return [a, b], c
 
     def on_epoch_end(self):
         if self.steps <= 0:
             return  # Skip this on the last epoch.
         np.random.seed(None)
-        np.random.shuffle(self.train_soft)
-        np.random.shuffle(self.join)
+        #np.random.shuffle(self.train_soft)
+        #np.random.shuffle(self.join)
         self.steps -= 1
         self.match = []
         self.unmatch = []
@@ -324,22 +324,22 @@ def make_steps(step, ampl):
     np.random.seed(None)
     np.random.shuffle(train)
 
-    test_features = branch_model.predict(FeatureGen(known)[0])
-    test_imgs = dec_model.predict(test_features)
-
-    for idx, img in enumerate(test_imgs):
-        img = np.array(img).reshape((224, 224))
-        img = img * 128 + 127.5
-        img = img.astype(np.uint8)
-        img = pil_image.fromarray(img)
-        img.save('/home/zhangjie/KWhaleData/generated_img_'+str(idx)+'.jpg')
+    # test_features = branch_model.predict(FeatureGen(known)[0])
+    # test_imgs = dec_model.predict(test_features)
+    #
+    # for idx, img in enumerate(test_imgs):
+    #     img = np.array(img).reshape((224, 224))
+    #     img = img * 128 + 127.5
+    #     img = img.astype(np.uint8)
+    #     img = pil_image.fromarray(img)
+    #     img.save('/home/zhangjie/KWhaleData/generated_img_'+str(idx)+'.jpg')
 
     # Compute the match score for each picture pair
     features, score = compute_score()
 
     # Train the model for 'step' epochs
     history = model.fit_generator(
-        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, join, steps=step, batch_size=32),
+        TrainingData(score + ampl * np.random.random_sample(size=score.shape), train_soft, join, steps=step, batch_size=64),
         initial_epoch=steps, epochs=steps + step, max_queue_size=12, workers=6,
         verbose=1, validation_data=TestingData(), callbacks=[cv_callback()]).history
     steps += step
@@ -361,35 +361,38 @@ if True:
                            by_name=True, skip_mismatch=True, reshape=True)
     print('training')
     if args.stage == 'train':
-        # # epoch -> 10
-        # make_steps(10, 1000)
-        # ampl = 100.0
-        # model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_10epochs_model_weights.h5')
-        # for _ in range(2):
-        #     print('noise ampl.  = ', ampl)
-        #     make_steps(5, ampl)
-        #     ampl = max(1.0, 100 ** -0.1 * ampl)
-        # model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20epochs_model_weights.h5')
-        # # epoch -> 150
+        # epoch -> 10
+        make_steps(10, 1000)
+        ampl = 100.0
+        for _ in range(2):
+            print('noise ampl.  = ', ampl)
+            make_steps(5, ampl)
+            ampl = max(1.0, 100 ** -0.1 * ampl)
+        # epoch -> 150
+        for _ in range(18): make_steps(5, 1.0)
+        # epoch -> 200
         set_lr(model, 16e-5)
-        for _ in range(4): make_steps(5, 100.0)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_20v2epochs_model_weights.h5')
-        for _ in range(4): make_steps(5, 100.0)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_40epochs_model_weights.h5')
+        for _ in range(10): make_steps(5, 0.5)
+        # epoch -> 240
         set_lr(model, 4e-5)
-        for _ in range(4): make_steps(5, 50.0)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_60epochs_model_weights.h5')
-        for _ in range(4): make_steps(5, 50.0)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_80epochs_model_weights.h5')
+        for _ in range(8): make_steps(5, 0.25)
+        # epoch -> 250
+        set_lr(model, 1e-5)
+        for _ in range(2): make_steps(5, 0.25)
+        # epoch -> 300
+        weights = model.get_weights()
+        model, branch_model, head_model = build_model(64e-5, 0.0002)
+        model.set_weights(weights)
+        for _ in range(10): make_steps(5, 1.0)
+        # epoch -> 350
         set_lr(model, 16e-5)
-        for _ in range(4): make_steps(5, 0.75)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_'+args.output_path+'_100epochs_model_weights.h5')
-        for _ in range(4): make_steps(5, 0.75)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_'+args.output_path+'_120epochs_model_weights.h5')
+        for _ in range(10): make_steps(5, 0.5)
+        # epoch -> 390
         set_lr(model, 4e-5)
-        for _ in range(4): make_steps(5, 0.5)
-        model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_140epochs_model_weights.h5')
-        for _ in range(4): make_steps(5, 0.5)
+        for _ in range(8): make_steps(5, 0.25)
+        # epoch -> 400
+        set_lr(model, 1e-5)
+        for _ in range(2): make_steps(5, 0.25)
         model.save_weights('/home/zhangjie/KWhaleData/attention_' + args.output_path + '_160epochs_model_weights.h5')
 
 

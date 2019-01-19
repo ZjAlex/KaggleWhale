@@ -73,7 +73,7 @@ def decoder_model(inp):
     return net
 
 
-def build_model(lr, l2, img_shape=(384, 384, 3), activation='sigmoid'):
+def build_model(lr, l2, img_shape=(384, 384, 1), activation='sigmoid'):
     ##############
     # BRANCH MODEL
     ##############

@@ -41,7 +41,7 @@ match_test, unmatch_test = get_random_test_data(test, w2vs, v2i)
 
 w2ts_soft, w2idx, train_soft_set, idx2w = get_w2idx(train_soft, w2ps)
 
-model, branch_model, head_model, dec_model, soft_model = build_model(args.lr, args.reg)
+model, branch_model, head_model = build_model(args.lr, args.reg)
 new_whale = 'new_whale'
 
 p2wts = {}
@@ -443,34 +443,34 @@ def prepare_submission(threshold, filename):
     return vtop, vhigh, pos
 
 
-def prepare_submission_softmax(threshold, filename):
-    """
-    Generate a Kaggle submission file.
-    @param threshold the score given to 'new_whale'
-    @param filename the submission file name
-    """
-    vtop = 0
-    vhigh = 0
-    pos = [0, 0, 0, 0, 0, 0]
-    with open(filename, 'wt', newline='\n') as f:
-        f.write('Image,Id\n')
-        for i, p in enumerate(tqdm(submit)):
-            t = []
-            s = set()
-            a = sm_submit[i, :]
-            for j in list(reversed(np.argsort(a))):
-                if a[j] < threshold and new_whale not in s:
-                    pos[len(t)] += 1
-                    s.add(new_whale)
-                    t.append(new_whale)
-                    if len(t) == 5: break;
-                s.add(idx2w[j])
-                t.append(idx2w[j])
-                if len(t) == 5: break;
-            if new_whale not in s: pos[5] += 1
-            assert len(t) == 5 and len(s) == 5
-            f.write(p + ',' + ' '.join(t[:5]) + '\n')
-    return vtop, vhigh, pos
+# def prepare_submission_softmax(threshold, filename):
+#     """
+#     Generate a Kaggle submission file.
+#     @param threshold the score given to 'new_whale'
+#     @param filename the submission file name
+#     """
+#     vtop = 0
+#     vhigh = 0
+#     pos = [0, 0, 0, 0, 0, 0]
+#     with open(filename, 'wt', newline='\n') as f:
+#         f.write('Image,Id\n')
+#         for i, p in enumerate(tqdm(submit)):
+#             t = []
+#             s = set()
+#             a = sm_submit[i, :]
+#             for j in list(reversed(np.argsort(a))):
+#                 if a[j] < threshold and new_whale not in s:
+#                     pos[len(t)] += 1
+#                     s.add(new_whale)
+#                     t.append(new_whale)
+#                     if len(t) == 5: break;
+#                 s.add(idx2w[j])
+#                 t.append(idx2w[j])
+#                 if len(t) == 5: break;
+#             if new_whale not in s: pos[5] += 1
+#             assert len(t) == 5 and len(s) == 5
+#             f.write(p + ',' + ' '.join(t[:5]) + '\n')
+#     return vtop, vhigh, pos
 
 
 tic = time.time()
@@ -482,10 +482,10 @@ if args.submit == 'first':
     score = head_model.predict_generator(ScoreGen(fknown, fsubmit), max_queue_size=20, workers=10, verbose=0)
     score = score_reshape(score, fknown, fsubmit)
     prepare_submission(args.threshold, 'submission.csv')
-else:
-    # Evaluate the model.
-    fsubmit = branch_model.predict_generator(FeatureGen(submit), max_queue_size=20, workers=10, verbose=0)
-    sm_submit = soft_model.predict(fsubmit, batch_size=128)
-    prepare_submission_softmax(args.threshold, 'submission.csv')
+# else:
+#     # Evaluate the model.
+#     fsubmit = branch_model.predict_generator(FeatureGen(submit), max_queue_size=20, workers=10, verbose=0)
+#     sm_submit = soft_model.predict(fsubmit, batch_size=128)
+#     prepare_submission_softmax(args.threshold, 'submission.csv')
 toc = time.time()
 print("Submission time: ", (toc - tic) / 60.)

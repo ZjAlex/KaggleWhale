@@ -362,7 +362,7 @@ def build_model(lr, l2, activation='sigmoid'):
     model = Model([img_a, img_b], x)
     model.compile(optim, loss='binary_crossentropy', metrics=['binary_crossentropy', 'acc'])
     return model, branch_model, head_model
-model, branch_model, head_model = build_model(64e-5, 0)
+model, branch_model, head_model = build_model(1e-5, 0.0002)
 
 
 h2ws = {}
@@ -801,14 +801,7 @@ if stage == 'train':
         model.set_weights(tmp.get_weights())
     print('training')
     if True:
-        # # epoch -> 10
-        # make_steps(10, 1000)
-        # ampl = 100.0
-        # for _ in range(2):
-        #    print('noise ampl.  = ', ampl)
-        #    make_steps(5, ampl)
-        #    ampl = max(1.0, 100 ** -0.1 * ampl)
-        make_steps(10, 1.0)
+        for _ in range(1): make_steps(5, 50)
         model.save('orimodel_30epochs.model')
 
 if os.path.isfile('/home/zhangjie/KaggleWhale/orimodel_30epochs.model'):
